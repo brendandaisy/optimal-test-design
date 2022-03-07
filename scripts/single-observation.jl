@@ -1,4 +1,5 @@
 using DrWatson
+@quickactivate "optimal-test-design"
 using DEParamDistributions
 using Distributions
 using CSV, DataFrames
@@ -34,8 +35,11 @@ factors = Dict{Symbol, Any}()
 vacc = length(ARGS) > 0
 if vacc
     addprocs(SlurmManager(parse(Int, ARGS[1])), partition="short")
-    @everywhere using Distributions
-    @everywhere using DEParamDistributions
+    @everywhere begin
+        using DrWatson
+        @quickactivate "optimal-test-design"
+        using Distributions, DEParamDistributions
+    end
     fname = datadir("sim", "single-observation")
 else # make some diagnostic plots
     using OrdinaryDiffEq, Plots, StatsPlots
