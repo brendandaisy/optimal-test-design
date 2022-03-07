@@ -56,7 +56,7 @@ end
 
 res = []
 for d ∈ dict_list(factors)
-    append!(res, uoft_exper(d; N=100, M=100))
+    append!(res, uoft_exper(d; N=50_000, M=20_000))
 end
 try
     mkdir(fname)
