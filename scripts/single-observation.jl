@@ -52,14 +52,18 @@ else # make some diagnostic plots
     fname = "_research/tmp/"
 end
 
-@everywhere single_obs(t, x; σ, n) = Normal(n * x[t], σ) # now make noise ∝ inf size
+@everywhere single_obs(t, x; σ, n) = Normal(n * x[t], σ)
 
 res = []
 for d ∈ dict_list(factors)
-    append!(res, uoft_exper(d; N=50_000, M=20_000))
+    append!(res, uoft_exper(d; N=100, M=100))
+end
+try
+    mkdir(fname)
+catch e 
 end
 CSV.write(joinpath(fname, "$obs_type-$(todaystr()).csv"), DataFrame(res))
 
-for i in workers()                                                             
-    rmprocs(i)                                                                 
+for i in workers()
+    rmprocs(i)
 end

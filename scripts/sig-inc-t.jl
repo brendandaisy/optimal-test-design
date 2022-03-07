@@ -1,3 +1,5 @@
+using DrWatson
+@quickactivate "optimal-test-design"
 using DEParamDistributions
 using Distributions
 using CSV, DataFrames
