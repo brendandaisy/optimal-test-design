@@ -40,7 +40,7 @@ if vacc
         @quickactivate "optimal-test-design"
         using Distributions, DEParamDistributions
     end
-    fname = datadir("sim", "single-observation")
+    fname = datadir("sims", "single-observation")
 else # make some diagnostic plots
     using OrdinaryDiffEq, Plots, StatsPlots
     pd = SIRParamDistribution(;θprior...)
