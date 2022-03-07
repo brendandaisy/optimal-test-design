@@ -35,8 +35,8 @@ factors = Dict{Symbol, Any}()
 vacc = length(ARGS) > 0
 if vacc
     addprocs(SlurmManager(parse(Int, ARGS[1])), partition="short")
+    @everywhere using DrWatson
     @everywhere begin
-        using DrWatson
         @quickactivate "optimal-test-design"
         using Distributions, DEParamDistributions
     end
