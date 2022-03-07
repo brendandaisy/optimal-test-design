@@ -1,0 +1,39 @@
+library(tidyverse)
+library(ggthemes)
+
+(notest <- read_csv("results/single-obs-no-test.csv"))
+(notest2 <- read_csv("results/noise-of-inf-2-3.csv"))
+(meanshift <- read_csv("results/mean-shift.csv"))
+
+
+true_inf <- c(
+    0.01, 0.017234986028274994, 0.029226916688214286, 0.0482619354074302, 0.07644676001950913, 0.11397801673090434, 0.15694203765403592,
+    0.197068585361762, 0.22556384374277325, 0.23791293991026669, 0.2351898235396991, 0.22162345300496464, 0.2018696959400936, 
+    0.1795447345733238, 0.15704515578805922, 0.13574849445435141, 0.11635024064541434, 0.09910377645846799, 0.08402199574081326, 0.0709903078468306, 0.059817465836561626, 0.05029848904490269, 0.04222657248401512, 0.03540215277236312, 
+    0.029650387465228304, 0.024814410446680653, 0.02075294687536625, 0.017345265065778624, 0.014491436294653753, 0.012103619476697134, 0.010105741535796938
+)
+peak <- which.max(true_inf)
+
+# ggplot(notest, aes(t, SIG, col=as.factor(sd), group=as.factor(sd))) +
+notest2 |>
+    bind_rows(mutate="mu100")
+    mutate(sd = str_c(sd, "*I(t)")) |>
+    bind_rows(mutate(notest, sd=as.character(sd))) |>
+    ggplot(aes(t, SIG)) +
+    geom_vline(xintercept=peak, col="orange", linetype="dotted") +
+    geom_line() +
+    geom_point() +
+    geom_line(aes(t, true_inf), tibble(t=0:30, true_inf=true_inf), col="orange", linetype="dashed") +
+    facet_grid(sd~free, scales="free_y")
+
+###
+
+uoft <- read_csv("results/single-obs-uoft.csv") |>
+    mutate(rep=rep(c(1, 2), each=n() %/% 2)) # TODO: assumes number of reps
+
+uoft |>
+    pivot_longer(c(SIG, NSSE)) |>
+    ggplot(aes(t, value, col=as.factor(budget), group=interaction(rep, budget))) +
+    geom_point() +
+    geom_line() +
+    facet_wrap(~name, scales="free_y")
