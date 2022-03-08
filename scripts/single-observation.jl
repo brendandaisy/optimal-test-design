@@ -46,7 +46,7 @@ if vacc
         @quickactivate "optimal-test-design"
         using Distributions, DEParamDistributions
         include(srcdir("observation-dicts.jl"))
-        obs_func = copy(single_obs_dict[$(obs_model)])
+        obs_func = single_obs_dict[$(obs_model)]
     end
     fname = datadir("sims", "single-observation")
 else # make some diagnostic plots
@@ -62,7 +62,7 @@ else # make some diagnostic plots
 end
 
 for d ∈ dict_list(factors)
-    res = uoft_exper(d; N=50_000, M=20_000)
+    res = uoft_exper(d; N=100, M=100)
     d["utils"] = res
     @tagsave("$fname/$(mysavename(d))", d)
 end
