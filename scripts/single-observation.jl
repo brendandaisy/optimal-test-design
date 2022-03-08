@@ -46,6 +46,7 @@ if vacc
         @quickactivate "optimal-test-design"
         using Distributions, DEParamDistributions
         include(srcdir("observation-dicts.jl"))
+        obs_model = copy(obs_model)
         obs_func = copy(single_obs_dict[obs_model])
     end
     fname = datadir("sims", "single-observation")
