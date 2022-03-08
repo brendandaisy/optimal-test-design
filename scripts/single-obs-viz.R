@@ -6,6 +6,12 @@ library(ggthemes)
 (meanshift <- read_csv("data/sims/mean-shift.csv"))
 (normshift <- read_csv("data/sims/single-observation/normal-03-07.csv"))
 
+test <- read_csv("_research/tmp/res.csv") |>
+    select(utils, obs_model, obs_params, true=θtrue) |>
+    mutate(utils=str_replace_all(utils, "Any|\\[|\\]", "")) |>
+    separate_rows(utils, sep=",", convert=TRUE)
+
+
 
 true_inf <- c(
     0.01, 0.017234986028274994, 0.029226916688214286, 0.0482619354074302, 0.07644676001950913, 0.11397801673090434, 0.15694203765403592,
