@@ -23,8 +23,7 @@ function uoft_exper(d; N=100, M=100)
     precomps = all_designs_precomps(θtrue, pdist; umap=(SIG=M,), dekwargs...) # simulate SIR curves from prior
     ts = Int.(1:dekwargs.saveat:pdist.stop)
     for t ∈ ts
-        obs_func = x->single_obs_dict[obs_model](t, x; obs_params...)
-        util = local_utility(t, θtrue, pdist, obs_func; N, precomps, dekwargs...)
+        util = local_utility(t, θtrue, pdist, x->obs_func(t, x; obs_params...); N, precomps, dekwargs...)
         push!(ret, util.SIG)
     end
     return ret
@@ -47,6 +46,7 @@ if vacc
         @quickactivate "optimal-test-design"
         using Distributions, DEParamDistributions
         include(srcdir("observation-dicts.jl"))
+        obs_func = copy(single_obs_dict[obs_model])
     end
     fname = datadir("sims", "single-observation")
 else # make some diagnostic plots
@@ -57,6 +57,7 @@ else # make some diagnostic plots
     display(plot(EnsembleSummary(sim), title="S₀~Unif$(params(pd.S₀)), β~Unif$(params(pd.β)), α~Unif$(params(pd.α))"))
     display(plot!(sim[rand(1:500, 100)], linealpha=0.15, lc=:gray))
     display(plot!(xtrue; lc=:orange))
+    obs_func = single_obs_dict[obs_model]
     fname = "_research/tmp"
 end
 
