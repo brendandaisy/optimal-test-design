@@ -62,7 +62,7 @@ end
 @everywhere obs_func(t, x; kw...) = single_obs_dict[$obs_model](t, x; kw...)
 
 for d ∈ dict_list(factors)
-    res = uoft_exper(d; N=100, M=100)
+    res = uoft_exper(d; N=50_000, M=20_000)
     d["utils"] = res
     @tagsave("$fname/$(mysavename(d))", d)
 end
