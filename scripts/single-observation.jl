@@ -46,7 +46,6 @@ if vacc
         @quickactivate "optimal-test-design"
         using Distributions, DEParamDistributions
         include(srcdir("observation-dicts.jl"))
-        obs_func = single_obs_dict[$(obs_model)]
     end
     fname = datadir("sims", "single-observation")
 else # make some diagnostic plots
@@ -57,9 +56,10 @@ else # make some diagnostic plots
     display(plot(EnsembleSummary(sim), title="S₀~Unif$(params(pd.S₀)), β~Unif$(params(pd.β)), α~Unif$(params(pd.α))"))
     display(plot!(sim[rand(1:500, 100)], linealpha=0.15, lc=:gray))
     display(plot!(xtrue; lc=:orange))
-    obs_func = single_obs_dict[obs_model]
     fname = "_research/tmp"
 end
+
+@everywhere obs_func(t, x; kw...) = single_obs_dict[$obs_model](t, x; kw...)
 
 for d ∈ dict_list(factors)
     res = uoft_exper(d; N=100, M=100)
