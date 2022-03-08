@@ -46,6 +46,7 @@ if vacc
     @everywhere begin
         @quickactivate "optimal-test-design"
         using Distributions, DEParamDistributions
+        include(srcdir("observation-dicts.jl"))
     end
     fname = datadir("sims", "single-observation")
 else # make some diagnostic plots
