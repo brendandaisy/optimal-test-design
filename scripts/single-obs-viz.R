@@ -1,9 +1,10 @@
 library(tidyverse)
 library(ggthemes)
 
-(notest <- read_csv("results/single-obs-no-test.csv"))
-(notest2 <- read_csv("results/noise-of-inf-2-3.csv"))
-(meanshift <- read_csv("results/mean-shift.csv"))
+(notest <- read_csv("data/sims/single-obs-no-test.csv"))
+(notest2 <- read_csv("data/sims/noise-of-inf-2-3.csv"))
+(meanshift <- read_csv("data/sims/mean-shift.csv"))
+(normshift <- read_csv("data/sims/single-observation/normal-03-07.csv"))
 
 
 true_inf <- c(
@@ -15,10 +16,14 @@ true_inf <- c(
 peak <- which.max(true_inf)
 
 # ggplot(notest, aes(t, SIG, col=as.factor(sd), group=as.factor(sd))) +
-notest2 |>
-    bind_rows(mutate="mu100")
-    mutate(sd = str_c(sd, "*I(t)")) |>
+# notest2 |>
+#     bind_rows(mutate="mu100")
+#     mutate(sd = str_c(sd, "*I(t)")) |>
+normshift |>
+    filter(σ == 10) |>
+    mutate(sd = str_c(σ, ", shift")) |>
     bind_rows(mutate(notest, sd=as.character(sd))) |>
+    mutate(free=str_replace_all(free, c(":S₀" = "S0", ":β" = "beta", ":α"="alpha"))) |>
     ggplot(aes(t, SIG)) +
     geom_vline(xintercept=peak, col="orange", linetype="dotted") +
     geom_line() +
@@ -28,7 +33,7 @@ notest2 |>
 
 ###
 
-uoft <- read_csv("results/single-obs-uoft.csv") |>
+uoft <- read_csv("data/sims/single-obs-uoft.csv") |>
     mutate(rep=rep(c(1, 2), each=n() %/% 2)) # TODO: assumes number of reps
 
 uoft |>
