@@ -7,6 +7,7 @@ using Distributed, ClusterManagers
 import Dates: today, format
 
 include(srcdir("observation-dicts.jl"))
+ENV["JULIA_WORKER_TIMEOUT"] = 120.
 
 todaystr() = format(today(), "mm-dd")
 mysavename(d) = replace(
