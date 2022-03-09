@@ -1,0 +1,13 @@
+#!/bin/bash                                                                    
+#SBATCH --nodes=10
+#SBATCH --ntasks=100
+#SBATCH --ntasks-per-node=10
+#SBATCH --cpus-per-task=1                                                                 
+#SBATCH --mem-per-cpu=4G                                                       
+#SBATCH --time=05:00:00
+#SBATCH --job-name=single-observation                                            
+#SBATCH --output=single-observation.out                                           
+#SBATCH --mail-user=bcase@uvm.edu                                     
+#SBATCH --mail-type=ALL
+
+julia -t 4 /gpfs1/home/b/c/bcase/optimal-test-design/scripts/single-observation.jl $SLURM_NTASKS
