@@ -33,8 +33,8 @@ end
 θprior = (S₀=Uniform(0.1, 0.9), β=Uniform(0.3, 3), α=Uniform(0.05, 0.3))
 dekwargs = (saveat=1, save_idxs=2) # observations may occur at Δt=1 intervals at comparment 2 (infectious)
 param_comb = [(:S₀, :β), (:β, :α), keys(θtrue)]
-obs_model = "poisson"
-obs_params = [(n=1,), (n=10,), (n=100,)]
+obs_model = "neg_binom"
+obs_params = [(r=rate, n=ntest) for rate ∈ [1, 20] for ntest ∈ [1, 10, 100]]
 
 factors = @strdict θtrue θprior dekwargs param_comb obs_model obs_params
 
@@ -62,7 +62,7 @@ end
 @everywhere obs_func(t, x; kw...) = single_obs_dict[$obs_model](t, x; kw...)
 
 for d ∈ dict_list(factors)
-    res = uoft_exper(d; N=50_000, M=20_000)
+    res = uoft_exper(d; N=40_000, M=20_000)
     d["utils"] = res
     @tagsave("$fname/$(mysavename(d))", d)
 end
