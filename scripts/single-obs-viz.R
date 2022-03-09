@@ -14,7 +14,7 @@ peak <- which.max(true_inf)
 (meanshift <- read_csv("data/sims/mean-shift.csv"))
 (normshift <- read_csv("data/sims/single-observation/normal-03-07.csv"))
 
-pois <- read_csv("_research/tmp/res.csv") |>
+allres <- read_csv("data/sims/single-observation/allres-03-09.csv") |>
     select(utils, obs_model, obs_params, param_comb, true=θtrue) |>
     mutate(utils=str_replace_all(utils, "Any|\\[|\\]", ""), t=str_c(1:(length(true_inf)-1), collapse=",")) |>
     separate_rows(utils, t, sep=",", convert=TRUE)
@@ -35,8 +35,14 @@ normshift |>
     geom_line(aes(t, true_inf), tibble(t=0:30, true_inf=true_inf), col="orange", linetype="dashed") +
     facet_grid(sd~free, scales="free_y")
 
-ggplot(pois, aes(t, utils)) +
+allres |>
+    mutate(
+        dispersion=ifelse(str_detect(obs_params, "r"), str_extract(obs_params, "r = \\d+"), "r = 0"),
+        ntest=str_extract(obs_params, "n = \\d+")
+    ) |>
+    filter(obs_model == "neg_binom") |>
+    ggplot(aes(t, utils, col=dispersion)) +
     geom_vline(xintercept=peak, col="orange", linetype="dashed") +
     geom_line() +
     geom_point() +
-    facet_grid(obs_params~param_comb, scales="free_y")
+    facet_grid(ntest~param_comb, scales="free_y")

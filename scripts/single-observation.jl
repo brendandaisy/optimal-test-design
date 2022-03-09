@@ -35,7 +35,7 @@ end
 dekwargs = (saveat=1, save_idxs=2) # observations may occur at Δt=1 intervals at comparment 2 (infectious)
 param_comb = [(:S₀, :β), (:β, :α), keys(θtrue)]
 obs_model = "neg_binom"
-obs_params = [(r=rate, n=ntest) for rate ∈ [1, 20] for ntest ∈ [1, 10, 100]]
+obs_params = [(r=rate, n=ntest) for rate ∈ [1, 20] for ntest ∈ [10, 100]]
 
 factors = @strdict θtrue θprior dekwargs param_comb obs_model obs_params
 
