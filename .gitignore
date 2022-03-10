@@ -2,6 +2,7 @@
 precompile.jl
 *.pdf
 slurmjob
+Manifest.jl
 
 ################################################################################
 #                          DrWatson Project Structure                          #
