@@ -37,11 +37,11 @@ normshift |>
 
 allres |>
     mutate(
-        dispersion=ifelse(str_detect(obs_params, "r"), str_extract(obs_params, "r = \\d+"), "r = 0"),
+        rate=ifelse(str_detect(obs_params, "r"), str_extract(obs_params, "r = \\d+"), "r = Inf"),
         ntest=str_extract(obs_params, "n = \\d+")
     ) |>
-    filter(obs_model == "neg_binom") |>
-    ggplot(aes(t, utils, col=dispersion)) +
+    # filter(obs_model == "neg_binom") |>
+    ggplot(aes(t, utils, col=rate)) +
     geom_vline(xintercept=peak, col="orange", linetype="dashed") +
     geom_line() +
     geom_point() +
