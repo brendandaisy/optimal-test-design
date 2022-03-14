@@ -20,7 +20,7 @@ function inct_exper(d; N=100, M=100)
     imaxs = 1:floor(Int, pdist.stop / dekwargs.saveat) # these are ~indexes~ to x(t) where t=i*saveat
     for imax ∈ imaxs
         # note first arg may never actually be needed? Consider rethinking
-        util = local_utility(-1, θtrue, pdist, x->obs_func(imax, x; obs_params...); N, precomps, dekwargs...)
+        util = local_utility(-1, θtrue, pdist, x->obs_func(imax, x, obs_model; obs_params...); N, precomps, dekwargs...)
         push!(ret, util.SIG)
     end
     return ret
@@ -49,10 +49,10 @@ else
     fname = "_research/tmp"
 end
 
-@everywhere obs_func(maxt, x; kw...) = inct_dict[$obs_model](maxt, x; kw...)
+@everywhere obs_func(maxt, x, mod; kw...) = inct_dict[mod](maxt, x; kw...)
 
 for d ∈ dict_list(factors)
-    res = inct_exper(d; N=40_000, M=20_000)
+    @btime res = inct_exper($d; N=8_000, M=2_000)
     d["utils"] = res
     @tagsave("$fname/$(mysavename(d))", d)
 end

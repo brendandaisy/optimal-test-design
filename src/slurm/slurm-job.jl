@@ -1,4 +1,5 @@
 using DrWatson
+@quickactivate "optimal-test-design"
 
 const DEFAULT_HOST_NAME = "vacc-user2.uvm.edu"
 const DEFAULT_USER = "bcase"
