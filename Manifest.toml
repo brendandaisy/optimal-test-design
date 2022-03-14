@@ -249,12 +249,12 @@ uuid = "754358af-613d-5f8d-9788-280bf1605d4c"
 version = "0.2.2"
 
 [[deps.DEParamDistributions]]
-deps = ["DataFrames", "DelayDiffEq", "DifferentialEquations", "Distributed", "Distributions", "IterTools", "OrdinaryDiffEq", "RecursiveArrayTools", "Statistics", "Turing"]
-git-tree-sha1 = "6c014a3f49fca7fee24d8f6b932881dec058edf6"
+deps = ["DataFrames", "DelayDiffEq", "DifferentialEquations", "Distributed", "Distributions", "IterTools", "OrdinaryDiffEq", "RecursiveArrayTools", "Statistics", "StatsFuns", "Turing"]
+git-tree-sha1 = "9853671294193d9048e1f36b4697ed2eb70a55c7"
 repo-rev = "main"
 repo-url = "https://github.com/brendandaisy/DEParamDistributions.jl"
 uuid = "0f28a210-f915-4f0a-9758-eb56fefcf495"
-version = "0.1.1"
+version = "0.1.2"
 
 [[deps.DataAPI]]
 git-tree-sha1 = "cc70b17275652eb47bc9e5f81635981f13cea5c8"
