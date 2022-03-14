@@ -52,7 +52,7 @@ end
 @everywhere obs_func(maxt, x, mod; kw...) = inct_dict[mod](maxt, x; kw...)
 
 for d ∈ dict_list(factors)
-    res = inct_exper($d; N=200, M=200)
+    res = inct_exper(d; N=8000, M=2000)
     d["utils"] = res
     @tagsave("$fname/$(mysavename(d))", d)
 end
