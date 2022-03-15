@@ -29,9 +29,9 @@ end
 θprior = (S₀=Uniform(0.1, 0.9), β=Uniform(0.3, 3), α=Uniform(0.05, 0.3))
 dekwargs = (saveat=2, save_idxs=2) # observations may occur at Δt=2 intervals at comparment 2 (infectious)
 param_comb = [(:S₀, :β), (:β, :α), keys(θtrue)]
-obs_model = "poisson"
-obs_params = (n=1000,)
-# obs_params = [(r=rate, n=ntest) for rate ∈ [1, 10] for ntest ∈ [10, 100]]
+obs_model = "neg_binom"
+# obs_params = (n=1000,)
+obs_params = [(r=rate, n=1000) for rate ∈ [1, 10]]
 
 factors = @strdict θtrue θprior dekwargs param_comb obs_model obs_params
 
