@@ -7,7 +7,6 @@ using Distributed, ClusterManagers
 import Dates: today, format
 
 include(srcdir("watson-tools.jl"))
-include(srcdir("observation-dicts.jl"))
 ENV["JULIA_WORKER_TIMEOUT"] = 120.
 
 function inct_exper(d; N=100, M=100)
@@ -31,7 +30,7 @@ end
 dekwargs = (saveat=2, save_idxs=2) # observations may occur at Δt=2 intervals at comparment 2 (infectious)
 param_comb = [(:S₀, :β), (:β, :α), keys(θtrue)]
 obs_model = "poisson"
-obs_params = [(n=10,), (n=100,)]
+obs_params = (n=1000,)
 # obs_params = [(r=rate, n=ntest) for rate ∈ [1, 10] for ntest ∈ [10, 100]]
 
 factors = @strdict θtrue θprior dekwargs param_comb obs_model obs_params
@@ -43,17 +42,18 @@ if vacc
     @everywhere begin
         @quickactivate "optimal-test-design"
         using Distributions, DEParamDistributions
-        include(srcdir("observation-dicts.jl"))
     end
     fname = datadir("sims", "increasing-tspan")
 else
     fname = "_research/tmp"
 end
 
+@everywhere include(srcdir("observation-dicts.jl"))
 @everywhere obs_func(maxt, x, mod; kw...) = inct_dict[mod](maxt, x; kw...)
 
 for d ∈ dict_list(factors)
     res = inct_exper(d; N=8000, M=2000)
+    # res = inct_exper(d; N=200, M=200)
     d["utils"] = res
     @tagsave("$fname/$(mysavename(d))", d)
 end
