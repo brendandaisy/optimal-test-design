@@ -19,9 +19,11 @@ inct <- inct_org |>
     pivot_longer(matches("u\\d+"), names_to="t", values_to="SIG") |>
     mutate(t=as.double(str_extract(t, "\\d+")))
 
+mylab <- function(x) paste0("Unknown: ", x)
+
 inct |>
     mutate(
-        rate=ifelse(str_detect(obs_params, "r"), str_extract(obs_params, "r = \\d+"), "r = Inf"),
+        rate=ifelse(str_detect(obs_params, "r"), str_extract(obs_params, "r = \\d+"), "r = Inf (Poisson)"),
         ntest=str_extract(obs_params, "n = \\d+")
     ) |>
     # filter(obs_model == "neg_binom") |>
@@ -29,4 +31,5 @@ inct |>
     geom_vline(xintercept=peak, col="orange", linetype="dashed") +
     geom_line() +
     geom_point() +
-    facet_grid(ntest~param_comb, scales="free_y")
+    facet_grid(ntest~param_comb, scales="free_y", labeller=labeller(param_comb=as_labeller(mylab))) +
+    labs(x="Days of observation", y="Shannon Information Gain", col="Dispersion")
