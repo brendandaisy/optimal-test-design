@@ -3,6 +3,7 @@ using DrWatson
 using DEParamDistributions
 using Distributions
 using CSV, DataFrames
+using NamedTupleTools
 using Distributed, ClusterManagers
 import Dates: today, format
 
@@ -13,6 +14,9 @@ function inct_exper(d; N=100, M=100)
     @unpack θtrue, θprior, dekwargs, param_comb, obs_model, obs_params = d
     ret = []
     parms = keys(θprior) # param names
+    xtrue = solve(de_problem(pdist, θtrue; dekwargs...), Tsit5()).u
+    obs_samp = [v isa Distribution ? rand(v) : v for v ∈ obs_vars]
+    obs_params = [NamedTuple{keys(obs_vars)}(s) for s ∈ obs_samp]
     vals = (θ ∈ param_comb ? getindex(θprior, θ) : getindex(θtrue, θ) for θ ∈ parms) # merge priors and fixed vals
     pdist = SIRParamDistribution(;zip(parms, vals)...) # make a SIR prob with priors and fixed vals
     precomps = all_designs_precomps(θtrue, pdist; umap=(SIG=M,), dekwargs...) # simulate SIR curves from prior
