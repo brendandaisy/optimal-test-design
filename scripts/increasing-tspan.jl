@@ -9,7 +9,7 @@ import Dates: today, format
 
 include(srcdir("watson-tools.jl"))
 include(srcdir("cond-simulations.jl"))
-ENV["JULIA_WORKER_TIMEOUT"] = 120.
+ENV["JULIA_WORKER_TIMEOUT"] = 240.
 
 function inct_exper!(d, cond_sims; N=100)
     @unpack θtrue, known, obs_model, obs_params = d
@@ -43,7 +43,7 @@ factors = @strdict θtrue known obs_model obs_params
 
 vacc = length(ARGS) > 0
 if vacc
-    addprocs(SlurmManager(parse(Int, ARGS[1])), partition="short")
+    addprocs(SlurmManager(parse(Int, ARGS[1])), partition="bluemoon", topology=:master_worker)
     @everywhere using DrWatson
     @everywhere begin
         @quickactivate "optimal-test-design"
