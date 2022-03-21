@@ -59,7 +59,7 @@ end
 @everywhere include(srcdir("observation-dicts.jl"))
 
 for d ∈ dict_list(factors)
-    inct_exper!(d, cond_sims; N=10_000)
+    inct_exper!(d, cond_sims; N=1000)
     tagsave("$fname/$(mysavename(d))", d; safe)
 end
 
