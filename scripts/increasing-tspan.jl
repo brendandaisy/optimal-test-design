@@ -21,7 +21,7 @@ function inct_exper!(d, cond_sims; N=100)
         cond_simᵢ = cond_sims[union(Set([θᵢ]), known)] # get sims x∣known, θᵢ
         lab = "sig-"*string(θᵢ)
         d[lab] = []
-        for imax ∈ eachindex(true_sim) # for each timespan
+        for imax ∈ 2:length(true_sim) # for each timespan
             obsp = merge(obs_params, (maxt=imax,))
             likelihood = inct_dict[obs_model]
             push!(d[lab], local_marginal_utility(true_sim, cond_simᵢ, pri_sims, obsp, likelihood; N))
@@ -37,7 +37,7 @@ obs_model = "poisson"
 # obs_params = (n=1000,)
 obs_params = [(n=ntest,) for ntest ∈ [10, 100, 1000]]
 
-cond_sims = get_cond_sims(θtrue, θprior, 2500; dekwargs...)
+cond_sims = get_cond_sims(θtrue, θprior, 100; dekwargs...)
 
 factors = @strdict θtrue known obs_model obs_params
 
@@ -59,7 +59,7 @@ end
 @everywhere include(srcdir("observation-dicts.jl"))
 
 for d ∈ dict_list(factors)
-    inct_exper!(d, cond_sims; N=1000)
+    inct_exper!(d, cond_sims; N=100)
     tagsave("$fname/$(mysavename(d))", d; safe)
 end
 

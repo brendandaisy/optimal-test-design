@@ -8,7 +8,7 @@ true_inf <- c(
     0.029650387465228304, 0.024814410446680653, 0.02075294687536625, 0.017345265065778624, 0.014491436294653753, 0.012103619476697134, 0.010105741535796938
 )
 peak <- which.max(true_inf)
-tsteps <- seq(1, length(true_inf)-1, by=2)
+tsteps <- seq(0, length(true_inf), by=2)
 
 (inct_org <- read_csv("data/sims/increasing-tspan/results-03-18.csv"))
 
@@ -32,4 +32,31 @@ inct |>
     geom_line() +
     geom_point() +
     facet_grid(ntest~param_comb, scales="free_y", labeller=labeller(param_comb=as_labeller(mylab))) +
+    labs(x="Days of observation", y="Shannon Information Gain", col="Dispersion")
+
+## Marginal plots ##
+
+recover_sig <- function(df, var) {
+    df |> mutate("{{var}}":=str_replace_all({{var}}, "Any|\\[|\\]", "")) |>
+        separate({{var}}, str_c("u", tsteps), sep=",", convert=TRUE, fill="right") |>
+        pivot_longer(matches("u\\d+"), names_to="t", values_to="SIG") |>
+        mutate(t=as.double(str_extract(t, "\\d+")))
+}
+
+(marg_org <- read_csv("_research/tmp/res.csv"))
+
+marg_beta <- marg_org |>
+    select(-path, true=θtrue) |>
+    recover_sig(`sig-β`)
+
+marg_beta |>
+    mutate(
+        rate=ifelse(str_detect(obs_params, "r"), str_extract(obs_params, "r = \\d+"), "r = Inf (Poisson)"),
+        ntest=str_extract(obs_params, "n = \\d+")
+    ) |>
+    ggplot(aes(t, SIG, col=rate)) +
+    geom_vline(xintercept=peak, col="orange", linetype="dashed") +
+    geom_line() +
+    geom_point() +
+    facet_grid(ntest~known, scales="free_y") +
     labs(x="Days of observation", y="Shannon Information Gain", col="Dispersion")

@@ -30,7 +30,7 @@ str2set(s) = length(s) == 0 ? Set{Symbol}() : Symbol.(split(s,", ")) |> Set
 set2str(s) = join(map(string, vcat(s...)), ", ")
 
 function get_cond_sims(θfix, θprior, M=100; subdir="cond-simulations", dekwargs...)
-    config = (;θfix, θprior, M)
+    config = (;θfix, θprior, M, dekwargs...)
     cond_sims, _ = produce_or_load(
         datadir("sims", subdir), config; 
         filename=mysavename(config; ignores=()), tag=false
