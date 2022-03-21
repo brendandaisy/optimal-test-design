@@ -32,12 +32,12 @@ end
 θtrue = (S₀=0.6, β=1.25, α=0.2)
 θprior = (S₀=Uniform(0.1, 0.9), β=Uniform(0.3, 3), α=Uniform(0.05, 0.3))
 dekwargs = (saveat=2, save_idxs=2) # observations may occur at Δt=2 intervals at comparment 2 (infectious)
-known = [Set([:α]), Set{Symbol}()]
+known = [Set([:α]), Set([:β]), Set([:S₀]), Set{Symbol}()]
 obs_model = "poisson"
 # obs_params = (n=1000,)
 obs_params = [(n=ntest,) for ntest ∈ [10, 100, 1000]]
 
-cond_sims = get_cond_sims(θtrue, θprior, 500; dekwargs...)
+cond_sims = get_cond_sims(θtrue, θprior, 2500; dekwargs...)
 
 factors = @strdict θtrue known obs_model obs_params
 
@@ -59,7 +59,7 @@ end
 @everywhere include(srcdir("observation-dicts.jl"))
 
 for d ∈ dict_list(factors)
-    inct_exper!(d, cond_sims; N=2000)
+    inct_exper!(d, cond_sims; N=10_000)
     tagsave("$fname/$(mysavename(d))", d; safe)
 end
 
