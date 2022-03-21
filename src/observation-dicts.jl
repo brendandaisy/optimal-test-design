@@ -9,8 +9,8 @@ const single_obs_dict = Dict(
 )
 
 const inct_dict = Dict(
-    "normal" => (maxt, x; σ, n) -> Normal(n * x[1:maxt], σ),
-    "normal_inf_noise" => (maxt, x; σ, n) -> Normal(n * x[1:maxt], σ * x[1:maxt]),
-    "poisson" => (maxt, x; n) -> joint_poisson(n, x[1:maxt]),
-    "neg_binom" => (maxt, x; r, n) -> joint_neg_binom(r, n .* x[1:maxt])
+    "normal" => (x; maxt, σ, n) -> Normal(n * x[1:maxt], σ),
+    "normal_inf_noise" => (x; maxt, σ, n) -> Normal(n * x[1:maxt], σ * x[1:maxt]),
+    "poisson" => (x; maxt, n) -> joint_poisson(n, x[1:maxt]),
+    "neg_binom" => (x; maxt, r, n) -> joint_neg_binom(r, n .* x[1:maxt])
 )

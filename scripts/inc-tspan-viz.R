@@ -10,7 +10,7 @@ true_inf <- c(
 peak <- which.max(true_inf)
 tsteps <- seq(1, length(true_inf)-1, by=2)
 
-(inct_org <- read_csv("data/sims/increasing-tspan/results-03-15.csv"))
+(inct_org <- read_csv("data/sims/increasing-tspan/results-03-18.csv"))
 
 inct <- inct_org |>
     select(utils, obs_model, obs_params, param_comb, true=θtrue) |>

@@ -8,36 +8,38 @@ using Distributed, ClusterManagers
 import Dates: today, format
 
 include(srcdir("watson-tools.jl"))
+include(srcdir("cond-simulations.jl"))
 ENV["JULIA_WORKER_TIMEOUT"] = 120.
 
-function inct_exper(d; N=100, M=100)
-    @unpack θtrue, θprior, dekwargs, param_comb, obs_model, obs_params = d
-    ret = []
-    parms = keys(θprior) # param names
-    xtrue = solve(de_problem(pdist, θtrue; dekwargs...), Tsit5()).u
-    obs_samp = [v isa Distribution ? rand(v) : v for v ∈ obs_vars]
-    obs_params = [NamedTuple{keys(obs_vars)}(s) for s ∈ obs_samp]
-    vals = (θ ∈ param_comb ? getindex(θprior, θ) : getindex(θtrue, θ) for θ ∈ parms) # merge priors and fixed vals
-    pdist = SIRParamDistribution(;zip(parms, vals)...) # make a SIR prob with priors and fixed vals
-    precomps = all_designs_precomps(θtrue, pdist; umap=(SIG=M,), dekwargs...) # simulate SIR curves from prior
-    imaxs = 1:floor(Int, pdist.stop / dekwargs.saveat) # these are ~indexes~ to x(t) where t=i*saveat
-    for imax ∈ imaxs
-        # note first arg may never actually be needed? Consider rethinking
-        util = local_utility(-1, θtrue, pdist, x->obs_func(imax, x, obs_model; obs_params...); N, precomps, dekwargs...)
-        push!(ret, util.SIG)
+function inct_exper!(d, cond_sims; N=100)
+    @unpack θtrue, known, obs_model, obs_params = d
+    pset = Set(keys(θtrue))
+    true_sim = cond_sims[pset].u
+    pri_sims = cond_sims[known]
+
+    for θᵢ ∈ setdiff(pset, known) # for each unknown var
+        cond_simᵢ = cond_sims[union(Set([θᵢ]), known)] # get sims x∣known, θᵢ
+        lab = "sig-"*string(θᵢ)
+        d[lab] = []
+        for imax ∈ eachindex(true_sim) # for each timespan
+            obsp = merge(obs_params, (maxt=imax,))
+            likelihood = inct_dict[obs_model]
+            push!(d[lab], local_marginal_utility(true_sim, cond_simᵢ, pri_sims, obsp, likelihood; N))
+        end
     end
-    return ret
 end
 
 θtrue = (S₀=0.6, β=1.25, α=0.2)
 θprior = (S₀=Uniform(0.1, 0.9), β=Uniform(0.3, 3), α=Uniform(0.05, 0.3))
 dekwargs = (saveat=2, save_idxs=2) # observations may occur at Δt=2 intervals at comparment 2 (infectious)
-param_comb = (:S₀, :α)
+known = [Set([:α]), Set{Symbol}()]
 obs_model = "poisson"
 # obs_params = (n=1000,)
 obs_params = [(n=ntest,) for ntest ∈ [10, 100, 1000]]
 
-factors = @strdict θtrue θprior dekwargs param_comb obs_model obs_params
+cond_sims = get_cond_sims(θtrue, θprior, 500; dekwargs...)
+
+factors = @strdict θtrue known obs_model obs_params
 
 vacc = length(ARGS) > 0
 if vacc
@@ -48,18 +50,17 @@ if vacc
         using Distributions, DEParamDistributions
     end
     fname = datadir("sims", "increasing-tspan")
+    safe = true
 else
     fname = "_research/tmp"
+    safe = false
 end
 
 @everywhere include(srcdir("observation-dicts.jl"))
-@everywhere obs_func(maxt, x, mod; kw...) = inct_dict[mod](maxt, x; kw...)
 
 for d ∈ dict_list(factors)
-    res = inct_exper(d; N=8000, M=2000)
-    # res = inct_exper(d; N=200, M=200)
-    d["utils"] = res
-    @tagsave("$fname/$(mysavename(d))", d)
+    inct_exper!(d, cond_sims; N=2000)
+    tagsave("$fname/$(mysavename(d))", d; safe)
 end
 
 for i in workers()

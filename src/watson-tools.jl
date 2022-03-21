@@ -2,8 +2,8 @@
 
 todaystr() = format(today(), "mm-dd")
 
-mysavename(d) = replace(
-    savename(d,  "jld2"; connector=" || ", allowedtypes=(String, Tuple, NamedTuple), ignores = (:dekwargs, :θprior)), 
+mysavename(d; ignores=(:dekwargs, :θprior)) = replace(
+    savename(d,  "jld2"; connector=" || ", allowedtypes=(String, Tuple, NamedTuple, Int, Set), ignores), 
     " = " => "="
 )
 
