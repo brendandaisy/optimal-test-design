@@ -99,9 +99,9 @@ version = "0.4.4"
 
 [[deps.BandedMatrices]]
 deps = ["ArrayLayouts", "FillArrays", "LinearAlgebra", "Random", "SparseArrays"]
-git-tree-sha1 = "0a48e1230cbbf1dce4a6961e0c92615c8be20ddd"
+git-tree-sha1 = "019aa88766e2493c59cbd0a9955e1bac683ffbcd"
 uuid = "aae01518-5342-5314-be14-df237901396f"
-version = "0.16.12"
+version = "0.16.13"
 
 [[deps.BangBang]]
 deps = ["Compat", "ConstructionBase", "Future", "InitialValues", "LinearAlgebra", "Requires", "Setfield", "Tables", "ZygoteRules"]
@@ -142,9 +142,9 @@ version = "0.4.1"
 
 [[deps.CPUSummary]]
 deps = ["Hwloc", "IfElse", "Preferences", "Static"]
-git-tree-sha1 = "68150205edbf60f0410ba2463b5b38eae44cad1f"
+git-tree-sha1 = "d7d58980f408c9b6b436914ae4c34fb6d6d7c8c9"
 uuid = "2a0fbf3d-bb9c-48f3-b0a9-814d99fd7ab9"
-version = "0.1.15"
+version = "0.1.16"
 
 [[deps.CSV]]
 deps = ["CodecZlib", "Dates", "FilePathsBase", "InlineStrings", "Mmap", "Parsers", "PooledArrays", "SentinelArrays", "Tables", "Unicode", "WeakRefStrings"]
@@ -172,9 +172,9 @@ version = "1.28.1"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra", "SparseArrays"]
-git-tree-sha1 = "c9a6160317d1abe9c44b3beb367fd448117679ca"
+git-tree-sha1 = "9950387274246d08af38f6eef8cb5480862a435f"
 uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-version = "1.13.0"
+version = "1.14.0"
 
 [[deps.ChangesOfVariables]]
 deps = ["ChainRulesCore", "LinearAlgebra", "Test"]
@@ -256,7 +256,7 @@ version = "0.2.2"
 
 [[deps.DEParamDistributions]]
 deps = ["DataFrames", "DelayDiffEq", "DifferentialEquations", "Distributed", "Distributions", "IterTools", "OrdinaryDiffEq", "RecursiveArrayTools", "Statistics", "StatsFuns", "Turing"]
-git-tree-sha1 = "f2148009a8e0ddde0687a37867b0b1a9ffe56332"
+git-tree-sha1 = "d2f82f31de17a659492c7345f7648a06987ae5da"
 repo-rev = "main"
 repo-url = "https://github.com/brendandaisy/DEParamDistributions.jl"
 uuid = "0f28a210-f915-4f0a-9758-eb56fefcf495"
@@ -652,9 +652,9 @@ version = "0.4.22"
 
 [[deps.JLFzf]]
 deps = ["Pipe", "REPL", "Random", "fzf_jll"]
-git-tree-sha1 = "a8d93f02e9db5428ccb73336a54c746e3e87edd3"
+git-tree-sha1 = "f377670cda23b6b7c1c0b3893e37451c5c1a2185"
 uuid = "1019f520-868f-41f5-a6de-eb00f4b6a39c"
-version = "0.1.4"
+version = "0.1.5"
 
 [[deps.JLLWrappers]]
 deps = ["Preferences"]
@@ -1483,9 +1483,9 @@ version = "0.2.2"
 
 [[deps.fzf_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "547d2167e376a423ad3c161c0aba34308cc897e7"
+git-tree-sha1 = "868e669ccb12ba16eaf50cb2957ee2ff61261c56"
 uuid = "214eeab7-80f7-51ab-84ad-2988db7cef09"
-version = "0.27.2+0"
+version = "0.29.0+0"
 
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]

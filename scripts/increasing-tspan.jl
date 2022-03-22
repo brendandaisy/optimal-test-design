@@ -24,7 +24,7 @@ function inct_exper!(d, cond_sims; N=100)
         for imax ∈ 2:length(true_sim) # for each timespan
             obsp = merge(obs_params, (maxt=imax,))
             likelihood = inct_dict[obs_model]
-            push!(d[lab], local_marginal_utility(true_sim, cond_simᵢ, pri_sims, obsp, likelihood; N))
+            push!(d[lab], local_marginal_utility(true_sim, cond_simᵢ, pri_sims, likelihood; N, obs_params=obsp))
         end
     end
 end
@@ -40,13 +40,13 @@ cond_sims = get_cond_sims(θtrue, θprior, 2500; dekwargs...)
 
 factors = @strdict θtrue known obs_model obs_params
 
-vacc = nprocs() > 1
+vacc = Threads.nthreads() > 4
 if vacc
-    @everywhere using DrWatson
-    @everywhere begin
-        @quickactivate "optimal-test-design"
-        using Distributions, DEParamDistributions
-    end
+    # @everywhere using DrWatson
+    # @everywhere begin
+    #     @quickactivate "optimal-test-design"
+    #     using Distributions, DEParamDistributions
+    # end
     fname = datadir("sims", "increasing-tspan")
     safe = true
 else
@@ -54,10 +54,10 @@ else
     safe = false
 end
 
-@everywhere include(srcdir("observation-dicts.jl"))
+include(srcdir("observation-dicts.jl"))
 
 for d ∈ dict_list(factors)
-    inct_exper!(d, cond_sims; N=8000)
+    inct_exper!(d, cond_sims; N=100)
     tagsave("$fname/$(mysavename(d))", d; safe)
 end
 
