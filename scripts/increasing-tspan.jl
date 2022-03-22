@@ -40,7 +40,7 @@ cond_sims = get_cond_sims(θtrue, θprior, 2500; dekwargs...)
 
 factors = @strdict θtrue known obs_model obs_params
 
-vacc = length(ARGS) > 0
+vacc = nprocs() > 1
 if vacc
     @everywhere using DrWatson
     @everywhere begin
