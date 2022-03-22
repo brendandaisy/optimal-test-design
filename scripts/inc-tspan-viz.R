@@ -8,7 +8,7 @@ true_inf <- c(
     0.029650387465228304, 0.024814410446680653, 0.02075294687536625, 0.017345265065778624, 0.014491436294653753, 0.012103619476697134, 0.010105741535796938
 )
 peak <- which.max(true_inf)
-tsteps <- seq(0, length(true_inf), by=2)
+tsteps <- seq(2, length(true_inf)-1, by=2)
 
 (inct_org <- read_csv("data/sims/increasing-tspan/results-03-18.csv"))
 
@@ -36,6 +36,13 @@ inct |>
 
 ## Marginal plots ##
 
+known_lab <- list(
+    "Set([:α])" = "Unknown: beta, S0",
+    "Set([:β])" = "Unknown: alpha, S0",
+    "Set([:S₀])" = "Unknown: alpha, beta",
+    "Set{Symbol}()" = "Unknown: alpha, beta, S0"
+)
+
 recover_sig <- function(df, var) {
     df |> mutate("{{var}}":=str_replace_all({{var}}, "Any|\\[|\\]", "")) |>
         separate({{var}}, str_c("u", tsteps), sep=",", convert=TRUE, fill="right") |>
@@ -43,13 +50,17 @@ recover_sig <- function(df, var) {
         mutate(t=as.double(str_extract(t, "\\d+")))
 }
 
-(marg_org <- read_csv("_research/tmp/res.csv"))
+(marg_org <- read_csv("data/sims/increasing-tspan/results-03-21.csv", na="missing"))
 
-marg_beta <- marg_org |>
-    select(-path, true=θtrue) |>
-    recover_sig(`sig-β`)
+marg <- marg_org |>
+    mutate(known=map_chr(known, ~known_lab[[.x]])) |>
+    select(-path, -gitcommit, true=θtrue, sig_beta=`sig-β`, sig_alpha=`sig-α`, sig_S0=`sig-S₀`)
+
+marg_beta <- marg |>
+    recover_sig(sig_S0)
 
 marg_beta |>
+    drop_na(SIG) |>
     mutate(
         rate=ifelse(str_detect(obs_params, "r"), str_extract(obs_params, "r = \\d+"), "r = Inf (Poisson)"),
         ntest=str_extract(obs_params, "n = \\d+")

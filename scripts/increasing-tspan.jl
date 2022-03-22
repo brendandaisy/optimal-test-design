@@ -37,7 +37,7 @@ obs_model = "poisson"
 # obs_params = (n=1000,)
 obs_params = [(n=ntest,) for ntest ∈ [10, 100, 1000]]
 
-cond_sims = get_cond_sims(θtrue, θprior, 100; dekwargs...)
+cond_sims = get_cond_sims(θtrue, θprior, 2500; dekwargs...)
 
 factors = @strdict θtrue known obs_model obs_params
 
@@ -59,7 +59,7 @@ end
 @everywhere include(srcdir("observation-dicts.jl"))
 
 for d ∈ dict_list(factors)
-    inct_exper!(d, cond_sims; N=100)
+    inct_exper!(d, cond_sims; N=8000)
     tagsave("$fname/$(mysavename(d))", d; safe)
 end
 
