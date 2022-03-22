@@ -3,7 +3,7 @@ using Distributed
 hosts = []                                                                     
 pids = []                                                                      
 for i in workers()                                                             
-    host, pid, t = fetch(                                                      
+    host, pid = fetch(                                                      
           @spawnat i (gethostname(), getpid())
 )                                                                              
     println("$host: $pid with t=$t")
