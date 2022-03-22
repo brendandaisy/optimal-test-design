@@ -6,7 +6,7 @@ for i in workers()
     host, pid = fetch(                                                      
           @spawnat i (gethostname(), getpid())
 )                                                                              
-    println("$host: $pid with t=$t")
+    println("$host: $pid")
     push!(hosts, host)
     push!(pids, pid)
 end
