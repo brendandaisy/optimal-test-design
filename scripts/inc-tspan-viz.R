@@ -45,29 +45,36 @@ known_lab <- list(
 
 recover_sig <- function(df, var) {
     df |> mutate("{{var}}":=str_replace_all({{var}}, "Any|\\[|\\]", "")) |>
-        separate({{var}}, str_c("u", tsteps), sep=",", convert=TRUE, fill="right") |>
-        pivot_longer(matches("u\\d+"), names_to="t", values_to="SIG") |>
-        mutate(t=as.double(str_extract(t, "\\d+")))
+        separate({{var}}, str_c("u", as_label(enquo(var)), tsteps), sep=",", convert=TRUE, fill="right")
+        # pivot_longer(matches("u\\d+"), values_to=as_label(enquo(var))) |>
+        # mutate(t=as.double(str_extract(name, "\\d+"))) |>
+        # select(-name)
 }
 
-(marg_org <- read_csv("data/sims/increasing-tspan/results-03-21.csv", na="missing"))
+(marg_org <- read_csv("_research/tmp/res.csv", na="missing"))
+(marg_org <- read_csv("data/sims/increasing-tspan/results-03-22.csv", na="missing"))
 
 marg <- marg_org |>
     mutate(known=map_chr(known, ~known_lab[[.x]])) |>
-    select(-path, -gitcommit, true=θtrue, sig_beta=`sig-β`, sig_alpha=`sig-α`, sig_S0=`sig-S₀`)
+    select(-path, true=θtrue, sig_beta=`sig-β`, sig_alpha=`sig-α`, sig_S0=`sig-S₀`)
 
-marg_beta <- marg |>
-    recover_sig(sig_S0)
+wmarg <- marg |>
+    recover_sig(sig_beta) |>
+    recover_sig(sig_alpha) |>
+    recover_sig(sig_S0) |>
+    pivot_longer(contains("usig"), values_to="SIG") |>
+    mutate(var=str_extract(name, "sig_[a-zS]+"), t=as.double(str_extract(name, "\\d+")))
 
-marg_beta |>
-    drop_na(SIG) |>
+wmarg |>
+    filter(obs_model!="poisson") |>
+    drop_na() |>
     mutate(
         rate=ifelse(str_detect(obs_params, "r"), str_extract(obs_params, "r = \\d+"), "r = Inf (Poisson)"),
         ntest=str_extract(obs_params, "n = \\d+")
     ) |>
-    ggplot(aes(t, SIG, col=rate)) +
+    ggplot(aes(t, SIG, col=var, group=interaction(var, rate))) +
     geom_vline(xintercept=peak, col="orange", linetype="dashed") +
-    geom_line() +
-    geom_point() +
+    geom_line(aes(linetype=rate)) +
+    geom_point(alpha=0.5, shape=1) +
     facet_grid(ntest~known, scales="free_y") +
     labs(x="Days of observation", y="Shannon Information Gain", col="Dispersion")

@@ -256,7 +256,7 @@ version = "0.2.2"
 
 [[deps.DEParamDistributions]]
 deps = ["DataFrames", "DelayDiffEq", "DifferentialEquations", "Distributed", "Distributions", "IterTools", "OrdinaryDiffEq", "RecursiveArrayTools", "Statistics", "StatsFuns", "Turing"]
-git-tree-sha1 = "d2f82f31de17a659492c7345f7648a06987ae5da"
+git-tree-sha1 = "b08d062df89f49a7bff84cb0eb3f38b116e55095"
 repo-rev = "main"
 repo-url = "https://github.com/brendandaisy/DEParamDistributions.jl"
 uuid = "0f28a210-f915-4f0a-9758-eb56fefcf495"

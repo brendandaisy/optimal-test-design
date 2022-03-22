@@ -35,6 +35,8 @@ dekwargs = (saveat=2, save_idxs=2) # observations may occur at Δt=2 intervals a
 known = [Set([:α]), Set([:β]), Set([:S₀]), Set{Symbol}()]
 obs_model = "neg_binom"
 obs_params = [(r=rate, n=ntest) for rate ∈ [1, 10] for ntest ∈ [10, 100, 1000]]
+# obs_model = "poisson"
+# obs_params = [(n=ntest,) for ntest ∈ [10, 100, 1000]]
 
 cond_sims = get_cond_sims(θtrue, θprior, 2500; dekwargs...)
 
@@ -57,7 +59,7 @@ end
 include(srcdir("observation-dicts.jl"))
 
 for d ∈ dict_list(factors)
-    inct_exper!(d, cond_sims; N=8000)
+    inct_exper!(d, cond_sims; N=12_000)
     tagsave("$fname/$(mysavename(d))", d; safe)
 end
 
