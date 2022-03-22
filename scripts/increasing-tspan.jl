@@ -4,12 +4,12 @@ using DEParamDistributions
 using Distributions
 using CSV, DataFrames
 using NamedTupleTools
-using Distributed, ClusterManagers
+using Distributed
 import Dates: today, format
 
 include(srcdir("watson-tools.jl"))
 include(srcdir("cond-simulations.jl"))
-ENV["JULIA_WORKER_TIMEOUT"] = 240.
+# ENV["JULIA_WORKER_TIMEOUT"] = 240.
 
 function inct_exper!(d, cond_sims; N=100)
     @unpack θtrue, known, obs_model, obs_params = d
@@ -33,9 +33,8 @@ end
 θprior = (S₀=Uniform(0.1, 0.9), β=Uniform(0.3, 3), α=Uniform(0.05, 0.3))
 dekwargs = (saveat=2, save_idxs=2) # observations may occur at Δt=2 intervals at comparment 2 (infectious)
 known = [Set([:α]), Set([:β]), Set([:S₀]), Set{Symbol}()]
-obs_model = "poisson"
-# obs_params = (n=1000,)
-obs_params = [(n=ntest,) for ntest ∈ [10, 100, 1000]]
+obs_model = "neg_binom"
+obs_params = [(r=rate, n=ntest) for rate ∈ [1, 10] for ntest ∈ [10, 100, 1000]]
 
 cond_sims = get_cond_sims(θtrue, θprior, 2500; dekwargs...)
 
@@ -43,7 +42,6 @@ factors = @strdict θtrue known obs_model obs_params
 
 vacc = length(ARGS) > 0
 if vacc
-    addprocs(SlurmManager(parse(Int, ARGS[1])), partition="bluemoon", topology=:master_worker)
     @everywhere using DrWatson
     @everywhere begin
         @quickactivate "optimal-test-design"
