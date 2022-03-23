@@ -51,7 +51,7 @@ recover_sig <- function(df, var) {
         # select(-name)
 }
 
-(marg_org <- read_csv("_research/tmp/res.csv", na="missing"))
+# (marg_org <- read_csv("_research/tmp/res.csv", na="missing"))
 (marg_org <- read_csv("data/sims/increasing-tspan/results-03-22.csv", na="missing"))
 
 marg <- marg_org |>
