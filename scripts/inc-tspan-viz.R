@@ -10,12 +10,13 @@ true_inf <- c(
 peak <- which.max(true_inf)
 tsteps <- seq(2, length(true_inf)-1, by=2)
 
+(inct_org <- read_csv("_research/tmp/res.csv", na="missing"))
 (inct_org <- read_csv("data/sims/increasing-tspan/results-03-18.csv"))
 
 inct <- inct_org |>
-    select(utils, obs_model, obs_params, param_comb, true=θtrue) |>
-    mutate(utils=str_replace_all(utils, "Any|\\[|\\]", "")) |>
-    separate(utils, str_c("u", tsteps), sep=",", convert=TRUE, fill="right") |>
+    select(sig, obs_model, obs_params, known, true=θtrue) |>
+    mutate(sig=str_replace_all(sig, "Any|\\[|\\]", "")) |>
+    separate(sig, str_c("u", tsteps), sep=",", convert=TRUE, fill="right") |>
     pivot_longer(matches("u\\d+"), names_to="t", values_to="SIG") |>
     mutate(t=as.double(str_extract(t, "\\d+")))
 
@@ -31,7 +32,7 @@ inct |>
     geom_vline(xintercept=peak, col="orange", linetype="dashed") +
     geom_line() +
     geom_point() +
-    facet_grid(ntest~param_comb, scales="free_y", labeller=labeller(param_comb=as_labeller(mylab))) +
+    facet_grid(ntest~known, scales="free_y", labeller=labeller(param_comb=as_labeller(mylab))) +
     labs(x="Days of observation", y="Shannon Information Gain", col="Dispersion")
 
 ## Marginal plots ##
@@ -51,8 +52,8 @@ recover_sig <- function(df, var) {
         # select(-name)
 }
 
-# (marg_org <- read_csv("_research/tmp/res.csv", na="missing"))
-(marg_org <- read_csv("data/sims/increasing-tspan/results-03-22.csv", na="missing"))
+(marg_org <- read_csv("_research/tmp/res.csv", na="missing"))
+(marg_org <- read_csv("data/sims/increasing-tspan/results-03-23.csv", na="missing"))
 
 marg <- marg_org |>
     mutate(known=map_chr(known, ~known_lab[[.x]])) |>
@@ -66,7 +67,7 @@ wmarg <- marg |>
     mutate(var=str_extract(name, "sig_[a-zS]+"), t=as.double(str_extract(name, "\\d+")))
 
 wmarg |>
-    filter(obs_model!="poisson") |>
+    # filter(obs_model!="poisson") |>
     drop_na() |>
     mutate(
         rate=ifelse(str_detect(obs_params, "r"), str_extract(obs_params, "r = \\d+"), "r = Inf (Poisson)"),

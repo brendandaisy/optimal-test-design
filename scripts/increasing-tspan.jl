@@ -11,21 +11,17 @@ include(srcdir("watson-tools.jl"))
 include(srcdir("cond-simulations.jl"))
 # ENV["JULIA_WORKER_TIMEOUT"] = 240.
 
-function inct_exper!(d; N=100)
+function inct_exper!(d, cond_sims; N=100)
     @unpack θtrue, known, obs_model, obs_params = d
     pset = Set(keys(θtrue))
     true_sim = cond_sims[pset].u
     pri_sims = cond_sims[known]
 
-    for θᵢ ∈ setdiff(pset, known) # for each unknown var
-        cond_simᵢ = cond_sims[union(Set([θᵢ]), known)] # get sims x∣known, θᵢ
-        lab = "sig-"*string(θᵢ)
-        d[lab] = []
-        for imax ∈ 2:length(true_sim) # for each timespan
-            obsp = merge(obs_params, (maxt=imax,))
-            likelihood = inct_dict[obs_model]
-            push!(d[lab], local_marginal_utility(true_sim, cond_simᵢ, pri_sims, likelihood; N, obs_params=obsp))
-        end
+    d["sig"] = []
+    for imax ∈ 2:length(true_sim) # for each timespan
+        obsp = merge(obs_params, (maxt=imax,))
+        likelihood = inct_dict[obs_model]
+        push!(d["sig"], local_utility(true_sim, pri_sims, likelihood; N, obs_params=obsp))
     end
 end
 
@@ -44,11 +40,6 @@ factors = @strdict θtrue known obs_model obs_params
 
 vacc = Threads.nthreads() > 4
 if vacc
-    # @everywhere using DrWatson
-    # @everywhere begin
-    #     @quickactivate "optimal-test-design"
-    #     using Distributions, DEParamDistributions
-    # end
     fname = datadir("sims", "increasing-tspan")
     safe = true
 else
@@ -59,6 +50,6 @@ end
 include(srcdir("observation-dicts.jl"))
 
 for d ∈ dict_list(factors)
-    inct_exper!(d, cond_sims; N=12_000)
+    inct_exper!(d, cond_sims; N=100)
     tagsave("$fname/$(mysavename(d))", d; safe)
 end
