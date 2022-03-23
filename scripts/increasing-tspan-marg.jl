@@ -11,7 +11,7 @@ include(srcdir("watson-tools.jl"))
 include(srcdir("cond-simulations.jl"))
 # ENV["JULIA_WORKER_TIMEOUT"] = 240.
 
-function inct_exper!(d, cond_sims; N=100)
+function inct_marg_exper!(d, cond_sims; N=100)
     @unpack θtrue, known, obs_model, obs_params = d
     pset = Set(keys(θtrue))
     true_sim = cond_sims[pset].u
@@ -49,7 +49,7 @@ if vacc
     #     @quickactivate "optimal-test-design"
     #     using Distributions, DEParamDistributions
     # end
-    fname = datadir("sims", "increasing-tspan")
+    fname = datadir("sims", "increasing-tspan-marg")
     safe = true
 else
     fname = "_research/tmp"
@@ -59,7 +59,7 @@ end
 include(srcdir("observation-dicts.jl"))
 
 for d ∈ dict_list(factors)
-    inct_exper!(d, cond_sims; N=12_000)
+    inct_marg_exper!(d, cond_sims; N=12_000)
     tagsave("$fname/$(mysavename(d))", d; safe)
 end
 
