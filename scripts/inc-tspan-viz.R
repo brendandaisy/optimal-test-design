@@ -10,12 +10,13 @@ true_inf <- c(
 peak <- which.max(true_inf)
 tsteps <- seq(2, length(true_inf)-1, by=2)
 
+(inct_org <- read_csv("_research/tmp/res.csv", na="missing"))
 (inct_org <- read_csv("data/sims/increasing-tspan/results-03-18.csv"))
 
 inct <- inct_org |>
-    select(utils, obs_model, obs_params, param_comb, true=θtrue) |>
-    mutate(utils=str_replace_all(utils, "Any|\\[|\\]", "")) |>
-    separate(utils, str_c("u", tsteps), sep=",", convert=TRUE, fill="right") |>
+    select(sig, obs_model, obs_params, known, true=θtrue) |>
+    mutate(sig=str_replace_all(sig, "Any|\\[|\\]", "")) |>
+    separate(sig, str_c("u", tsteps), sep=",", convert=TRUE, fill="right") |>
     pivot_longer(matches("u\\d+"), names_to="t", values_to="SIG") |>
     mutate(t=as.double(str_extract(t, "\\d+")))
 
@@ -51,7 +52,7 @@ recover_sig <- function(df, var) {
         # select(-name)
 }
 
-# (marg_org <- read_csv("_research/tmp/res.csv", na="missing"))
+(marg_org <- read_csv("_research/tmp/res.csv", na="missing"))
 (marg_org <- read_csv("data/sims/increasing-tspan/results-03-22.csv", na="missing"))
 
 marg <- marg_org |>
