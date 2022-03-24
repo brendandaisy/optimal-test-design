@@ -59,6 +59,6 @@ end
 include(srcdir("observation-dicts.jl"))
 
 for d ∈ dict_list(factors)
-    inct_marg_exper!(d, cond_sims; N=10_000, M=10_000)
+    inct_marg_exper!(d, cond_sims; N=5000, M=2500)
     tagsave("$fname/$(mysavename(d))", d; safe)
 end
