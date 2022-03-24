@@ -11,7 +11,7 @@ include(srcdir("watson-tools.jl"))
 include(srcdir("cond-simulations.jl"))
 # ENV["JULIA_WORKER_TIMEOUT"] = 240.
 
-function inct_marg_exper!(d, cond_sims; N=100)
+function inct_marg_exper!(d, cond_sims; N=100, M=100)
     @unpack θtrue, known, obs_model, obs_params = d
     pset = Set(keys(θtrue))
     true_sim = cond_sims[pset].u
@@ -24,7 +24,7 @@ function inct_marg_exper!(d, cond_sims; N=100)
         for imax ∈ 2:length(true_sim) # for each timespan
             obsp = merge(obs_params, (maxt=imax,))
             likelihood = inct_dict[obs_model]
-            push!(d[lab], local_marginal_utility(true_sim, cond_simᵢ, pri_sims, likelihood; N, obs_params=obsp))
+            push!(d[lab], local_marginal_utility(true_sim, cond_simᵢ, pri_sims, likelihood; N, M, obs_params=obsp))
         end
     end
 end
@@ -38,7 +38,7 @@ known = [Set([:α]), Set([:β]), Set([:S₀]), Set{Symbol}()]
 obs_model = "poisson"
 obs_params = [(n=ntest,) for ntest ∈ [10, 100, 1000, 10_000]]
 
-cond_sims = get_cond_sims(θtrue, θprior, 1500; dekwargs...)
+cond_sims = get_cond_sims(θtrue, θprior, 40_000; dekwargs...)
 
 factors = @strdict θtrue known obs_model obs_params
 
@@ -59,6 +59,6 @@ end
 include(srcdir("observation-dicts.jl"))
 
 for d ∈ dict_list(factors)
-    inct_marg_exper!(d, cond_sims; N=200)
+    inct_marg_exper!(d, cond_sims; N=15_000, M=4000)
     tagsave("$fname/$(mysavename(d))", d; safe)
 end
