@@ -38,7 +38,7 @@ known = [Set([:α]), Set([:β]), Set([:S₀]), Set{Symbol}()]
 obs_model = "poisson"
 obs_params = [(n=ntest,) for ntest ∈ [10, 100, 1000, 10_000]]
 
-cond_sims = get_cond_sims(θtrue, θprior, 2750; dekwargs...)
+cond_sims = get_cond_sims(θtrue, θprior, 2751; dekwargs...)
 
 factors = @strdict θtrue known obs_model obs_params
 
