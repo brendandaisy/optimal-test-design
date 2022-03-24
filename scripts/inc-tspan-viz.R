@@ -53,7 +53,7 @@ recover_sig <- function(df, var) {
 }
 
 (marg_org <- read_csv("_research/tmp/res.csv", na="missing"))
-(marg_org <- read_csv("data/sims/increasing-tspan/results-03-23.csv", na="missing"))
+(marg_org <- read_csv("data/sims/increasing-tspan-marg/results-03-24.csv", na="missing"))
 
 marg <- marg_org |>
     mutate(known=map_chr(known, ~known_lab[[.x]])) |>
@@ -67,7 +67,7 @@ wmarg <- marg |>
     mutate(var=str_extract(name, "sig_[a-zS]+"), t=as.double(str_extract(name, "\\d+")))
 
 wmarg |>
-    # filter(obs_model!="poisson") |>
+    filter(obs_model == "poisson") |>
     drop_na() |>
     mutate(
         rate=ifelse(str_detect(obs_params, "r"), str_extract(obs_params, "r = \\d+"), "r = Inf (Poisson)"),
@@ -77,5 +77,5 @@ wmarg |>
     geom_vline(xintercept=peak, col="orange", linetype="dashed") +
     geom_line(aes(linetype=rate)) +
     geom_point(alpha=0.5, shape=1) +
-    facet_grid(ntest~known, scales="free_y") +
+    facet_wrap(ntest~known, scales="free_y") +
     labs(x="Days of observation", y="Shannon Information Gain", col="Dispersion")

@@ -31,15 +31,14 @@ end
 
 θtrue = (S₀=0.6, β=1.25, α=0.2)
 θprior = (S₀=Uniform(0.1, 0.9), β=Uniform(0.3, 3), α=Uniform(0.05, 0.3))
-dekwargs = (saveat=2, save_idxs=2) # observations may occur at Δt=2 intervals at comparment 2 (infectious)
+dekwargs = (saveat=1, save_idxs=2) # observations may occur at Δt=1 intervals at comparment 2 (infectious)
 known = [Set([:α]), Set([:β]), Set([:S₀]), Set{Symbol}()]
 # obs_model = "neg_binom"
 # obs_params = [(r=rate, n=ntest) for rate ∈ [1, 10] for ntest ∈ [10, 100, 1000]]
 obs_model = "poisson"
-obs_params = (n=10_000,)
-# obs_params = [(n=ntest,) for ntest ∈ [10, 100, 1000]]
+obs_params = [(n=ntest,) for ntest ∈ [10, 100, 1000, 10_000]]
 
-cond_sims = get_cond_sims(θtrue, θprior, 2500; dekwargs...)
+cond_sims = get_cond_sims(θtrue, θprior, 2750; dekwargs...)
 
 factors = @strdict θtrue known obs_model obs_params
 
