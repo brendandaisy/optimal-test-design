@@ -38,7 +38,7 @@ known = [Set([:α]), Set([:β]), Set([:S₀]), Set{Symbol}()]
 obs_model = "poisson"
 obs_params = [(n=ntest,) for ntest ∈ [10, 100, 1000, 10_000]]
 
-cond_sims = get_cond_sims(θtrue, θprior, 2751; dekwargs...)
+cond_sims = get_cond_sims(θtrue, θprior, 1500; dekwargs...)
 
 factors = @strdict θtrue known obs_model obs_params
 
@@ -59,10 +59,6 @@ end
 include(srcdir("observation-dicts.jl"))
 
 for d ∈ dict_list(factors)
-    inct_marg_exper!(d, cond_sims; N=14_000)
+    inct_marg_exper!(d, cond_sims; N=200)
     tagsave("$fname/$(mysavename(d))", d; safe)
-end
-
-for i in workers()
-    rmprocs(i)
 end
