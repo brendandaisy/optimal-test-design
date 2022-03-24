@@ -8,7 +8,7 @@ true_inf <- c(
     0.029650387465228304, 0.024814410446680653, 0.02075294687536625, 0.017345265065778624, 0.014491436294653753, 0.012103619476697134, 0.010105741535796938
 )
 peak <- which.max(true_inf)
-tsteps <- seq(2, length(true_inf)-1, by=2)
+tsteps <- seq(2, length(true_inf)-1, by=1)
 
 (inct_org <- read_csv("_research/tmp/res.csv", na="missing"))
 (inct_org <- read_csv("data/sims/increasing-tspan/results-03-18.csv"))
@@ -46,7 +46,7 @@ known_lab <- list(
 
 recover_sig <- function(df, var) {
     df |> mutate("{{var}}":=str_replace_all({{var}}, "Any|\\[|\\]", "")) |>
-        separate({{var}}, str_c("u", as_label(enquo(var)), tsteps), sep=",", convert=TRUE, fill="right")
+        separate({{var}}, str_c("u", as_label(enquo(var)), 1:30), sep=",", convert=TRUE, fill="right")
         # pivot_longer(matches("u\\d+"), values_to=as_label(enquo(var))) |>
         # mutate(t=as.double(str_extract(name, "\\d+"))) |>
         # select(-name)
@@ -73,7 +73,7 @@ wmarg |>
         rate=ifelse(str_detect(obs_params, "r"), str_extract(obs_params, "r = \\d+"), "r = Inf (Poisson)"),
         ntest=str_extract(obs_params, "n = \\d+")
     ) |>
-    ggplot(aes(t, SIG, col=var, group=interaction(var, rate))) +
+    ggplot(aes(t, SIG, col=var, group=interaction(var, rate, gitcommit))) +
     geom_vline(xintercept=peak, col="orange", linetype="dashed") +
     geom_line(aes(linetype=rate)) +
     geom_point(alpha=0.5, shape=1) +
