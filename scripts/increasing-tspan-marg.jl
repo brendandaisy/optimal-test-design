@@ -33,9 +33,10 @@ end
 θprior = (S₀=Uniform(0.1, 0.9), β=Uniform(0.3, 3), α=Uniform(0.05, 0.3))
 dekwargs = (saveat=2, save_idxs=2) # observations may occur at Δt=2 intervals at comparment 2 (infectious)
 known = [Set([:α]), Set([:β]), Set([:S₀]), Set{Symbol}()]
-obs_model = "neg_binom"
-obs_params = [(r=rate, n=ntest) for rate ∈ [1, 10] for ntest ∈ [10, 100, 1000]]
-# obs_model = "poisson"
+# obs_model = "neg_binom"
+# obs_params = [(r=rate, n=ntest) for rate ∈ [1, 10] for ntest ∈ [10, 100, 1000]]
+obs_model = "poisson"
+obs_params = (n=10_000,)
 # obs_params = [(n=ntest,) for ntest ∈ [10, 100, 1000]]
 
 cond_sims = get_cond_sims(θtrue, θprior, 2500; dekwargs...)
@@ -59,7 +60,7 @@ end
 include(srcdir("observation-dicts.jl"))
 
 for d ∈ dict_list(factors)
-    inct_marg_exper!(d, cond_sims; N=12_000)
+    inct_marg_exper!(d, cond_sims; N=14_000)
     tagsave("$fname/$(mysavename(d))", d; safe)
 end
 
