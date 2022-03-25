@@ -53,7 +53,7 @@ recover_sig <- function(df, var) {
 }
 
 (marg_org <- read_csv("_research/tmp/res.csv", na="missing"))
-(marg_org <- read_csv("data/sims/increasing-tspan-marg/results-03-24.csv", na="missing"))
+(marg_org <- read_csv("data/sims/increasing-tspan-marg/results-03-25.csv", na="missing"))
 
 marg <- marg_org |>
     mutate(known=map_chr(known, ~known_lab[[.x]])) |>
@@ -73,10 +73,11 @@ wmarg |>
         rate=ifelse(str_detect(obs_params, "r"), str_extract(obs_params, "r = \\d+"), "r = Inf (Poisson)"),
         ntest=str_extract(obs_params, "n = \\d+")
     ) |>
-    filter(ntest != "n = 10000") |>
-    ggplot(aes(t, SIG, col=var, group=interaction(var, rate))) +
+    # filter(ntest != "n = 10000") |>
+    ggplot(aes(t, SIG, col=var, group=interaction(var, rate, gitcommit))) +
     geom_vline(xintercept=peak, col="orange", linetype="dashed") +
-    geom_line(aes(linetype=rate)) +
+    # geom_line(aes(linetype=rate)) +
     geom_point(alpha=0.5, shape=1) +
     facet_grid(ntest~known, scales="free_y") +
     labs(x="Days of observation", y="Shannon Information Gain", col="Dispersion")
+
