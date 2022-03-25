@@ -8,7 +8,7 @@ true_inf <- c(
     0.029650387465228304, 0.024814410446680653, 0.02075294687536625, 0.017345265065778624, 0.014491436294653753, 0.012103619476697134, 0.010105741535796938
 )
 peak <- which.max(true_inf)
-tsteps <- seq(2, length(true_inf)-1, by=2)
+tsteps <- seq(1, length(true_inf)-1, by=1)
 
 (inct_org <- read_csv("_research/tmp/res.csv", na="missing"))
 (inct_org <- read_csv("data/sims/increasing-tspan/results-03-18.csv"))
@@ -76,8 +76,8 @@ wmarg |>
     # filter(ntest != "n = 10000") |>
     ggplot(aes(t, SIG, col=var, group=interaction(var, rate, gitcommit))) +
     geom_vline(xintercept=peak, col="orange", linetype="dashed") +
-    # geom_line(aes(linetype=rate)) +
-    geom_point(alpha=0.5, shape=1) +
+    geom_line(aes(linetype=rate)) +
+    geom_point(shape=1) +
     facet_grid(ntest~known, scales="free_y") +
     labs(x="Days of observation", y="Shannon Information Gain", col="Dispersion")
 

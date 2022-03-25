@@ -9,29 +9,26 @@ Random.seed!(1234)
 
 θtrue = (S₀=0.6, β=1.25, α=0.2)
 θprior = (S₀=Uniform(0.1, 0.9), β=Uniform(0.3, 3), α=Uniform(0.05, 0.3))
-dekwargs = (save_idxs=2, saveat=1)
+dekwargs = (save_idxs=2, saveat=0.1)
 ntest = 100
 rate = 10
 
 pdist = SIRParamDistribution(;θprior...)
 xtrue = solve(de_problem(pdist, θtrue; dekwargs...), Tsit5()).u
-sim = simulate(pdist, 500; keep=true, save_idxs=2, dense=true)
+sim = simulate(pdist, 500; keep=true, dekwargs...)
 
-plot(EnsembleSummary(sim); lc=:purple, fc=:purple, thickness_scaling=1.2, draw_arrow=true, grids=:y, yaxis="")
-for _=1:19
-    plot!(sim[rand(1:500)], linealpha=0.25, lc=:gray)
-end
-plot!(sim[rand(1:500)], linealpha=0.25, lc=:gray)
-# y = rand(joint_neg_binom(rate, xtrue .* ntest))
-# plot!(sim[1].t, xtrue; lc=:orange)
-# scatter!(sim[1].t, y / ntest, lab="data")
+qhi = EnsembleSummary(sim).qhigh
+qlo = EnsembleSummary(sim).qlow
+subsim = [sim[i].u for i ∈ sample(1:500, 50)]
+curves = DataFrame(subsim, :auto)
+curves.t = sim[1].t
+@rput qhi qlo curves
 
-function get_post(tmax, y=rand(joint_neg_binom(rate, xtrue[1:tmax] .* ntest)))
-    fit = sample_mcmc(
-        y, pdist, x->joint_neg_binom(rate, x[1:tmax] .* ntest); dekwargs..., 
-        arraylik=false, iter=1000
+function get_post(tmax, y=rand(joint_neg_binom(rate, xtrue[1:10:(tmax*10)] .* ntest)))
+    sample_mcmc(
+        y, pdist, x->joint_neg_binom(rate, x[1:10:((tmax-1)*10+1)] .* ntest); dekwargs..., 
+        arraylik=false, iter=1000, ŷ=true
     )
-    return fitchain(fit, pdist)
 end
 
 function get_sig(tmax, y=rand(joint_neg_binom(rate, xtrue[1:tmax] .* ntest)))
@@ -39,6 +36,17 @@ function get_sig(tmax, y=rand(joint_neg_binom(rate, xtrue[1:tmax] .* ntest)))
     pri_ldists = map(x->joint_neg_binom(rate, x[1:tmax] .* ntest), sims)
     DEParamDistributions.sig(y, pri_ldists, joint_neg_binom(rate, xtrue[1:tmax] .* ntest))
 end
+
+y=rand(joint_neg_binom(rate, xtrue[1:10:end] .* ntest))
+_, _c6 = get_post(6, y[1:6])
+_, _c12 = get_post(12, y[1:12])
+
+c6 = DataFrame(sample(reshape(_c6, :), 50), :auto)
+c6.t = sim[1].t
+c12 = DataFrame(sample(reshape(_c12, :), 50), :auto)
+c12.t = sim[1].t
+
+@rput c6 c12 y xtrue
 
 # y = rand(joint_neg_binom(rate, xtrue[1:12] .* ntest))
 # post = get_post(12, y)
