@@ -29,16 +29,17 @@ function inct_marg_exper!(d, cond_sims; N=100, M=100)
     end
 end
 
+subfolder = "diff-priors"
 θtrue = (S₀=0.6, β=1.25, α=0.2)
-θprior = (S₀=Uniform(0.1, 0.9), β=Uniform(0.3, 3), α=Uniform(0.05, 0.3))
+θprior = (S₀=Uniform(0.3, 0.75), β=Uniform(0.9, 1.5), α=Uniform(0.05, 0.7))
 dekwargs = (saveat=1, save_idxs=2) # observations may occur at Δt=1 intervals at comparment 2 (infectious)
 known = [Set([:α]), Set([:β]), Set([:S₀]), Set{Symbol}()]
 # obs_model = "neg_binom"
 # obs_params = [(r=rate, n=ntest) for rate ∈ [1, 10] for ntest ∈ [10, 100, 1000]]
 obs_model = "poisson"
-obs_params = [(n=ntest,) for ntest ∈ [10, 100, 1000]]
+obs_params = [(n=ntest,) for ntest ∈ [100, 1000]]
 
-cond_sims = get_cond_sims(θtrue, θprior, 40_000; dekwargs...)
+cond_sims = get_cond_sims(θtrue, θprior, 4000; dekwargs...)
 
 factors = @strdict θtrue known obs_model obs_params
 
@@ -59,6 +60,6 @@ end
 include(srcdir("observation-dicts.jl"))
 
 for d ∈ dict_list(factors)
-    inct_marg_exper!(d, cond_sims; N=5000, M=5000)
+    inct_marg_exper!(d, cond_sims; N=500, M=500)
     tagsave("$fname/$(mysavename(d))", d; safe)
 end

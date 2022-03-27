@@ -74,10 +74,9 @@ wmarg |>
         ntest=str_extract(obs_params, "n = \\d+")
     ) |>
     # filter(ntest != "n = 10000") |>
-    ggplot(aes(t, SIG, col=var, group=interaction(var, rate, gitcommit))) +
+    ggplot(aes(t, SIG, col=var, group=interaction(var, rate))) +
     geom_vline(xintercept=peak, col="orange", linetype="dashed") +
     geom_line(aes(linetype=rate)) +
-    geom_point(shape=1) +
     facet_grid(ntest~known, scales="free_y") +
     labs(x="Days of observation", y="Shannon Information Gain", col="Dispersion")
 
