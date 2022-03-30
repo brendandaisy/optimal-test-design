@@ -23,7 +23,7 @@ end
 θprior = (S₀=Uniform(0.1, 0.9), β=Uniform(0.3, 3), α=Uniform(0.05, 0.3))
 dekwargs = (saveat=5, save_idxs=2)
 obs_model = "neg_binom"
-obs_param_grid = [(r=rate, n=ntest) for rate ∈ 1:10:100 for ntest ∈ 100:100:5000]
+obs_param_grid = [(r=100, n=ntest) for ntest ∈ 100:100:5000]
 
 cond_sims = get_cond_sims(θtrue, θprior, 40_000; dekwargs...)
 

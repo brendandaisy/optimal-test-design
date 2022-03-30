@@ -4,6 +4,7 @@ using Plots, StatsPlots
 using Random
 using DataFrames
 using RCall
+using DiffEqSensitivity, ForwardDiff
 
 Random.seed!(1234)
 
@@ -20,9 +21,21 @@ sim = simulate(pdist, 500; keep=true, dekwargs...)
 qhi = EnsembleSummary(sim).qhigh
 qlo = EnsembleSummary(sim).qlow
 subsim = [sim[i].u for i ∈ sample(1:500, 50)]
-curves = DataFrame(subsim, :auto)
+pri_curves = DataFrame(subsim, :auto)
 curves.t = sim[1].t
-@rput qhi qlo curves
+
+y=rand(joint_neg_binom(rate, xtrue[1:10:end] .* ntest))
+pri_dist = [joint_neg_binom(rate, s[1:10:(12*10)] .* ntest) for s ∈ subsim]
+pri_lpdf = [logpdf(dist, y[1:12]) for dist ∈ pri_dist]
+@rput qhi qlo pri_curves pri_lpdf
+
+
+βpd = SIRParamDistribution(S₀=Uniform(0.1, 0.9), β=1.25, α=Uniform(0.05, 0.3))
+βcurves = simulate(βpd, 50; saveat=0.1, save_idxs=2)
+βdist = [joint_neg_binom(rate, s[1:10:(12*10)] .* ntest) for s ∈ βcurves]
+βlpdf = [logpdf(dist, y[1:12]) for dist ∈ βdist]
+bdf = DataFrame(βcurves.u, :auto)
+@rput y bdf βlpdf
 
 function get_post(tmax, y=rand(joint_neg_binom(rate, xtrue[1:10:(tmax*10)] .* ntest)))
     sample_mcmc(
@@ -38,8 +51,8 @@ function get_sig(tmax, y=rand(joint_neg_binom(rate, xtrue[1:tmax] .* ntest)))
 end
 
 y=rand(joint_neg_binom(rate, xtrue[1:10:end] .* ntest))
-_, _c6 = get_post(6, y[1:6])
-_, _c12 = get_post(12, y[1:12])
+fit6, _c6 = get_post(6, y[1:6])
+fit12, _c12 = get_post(12, y[1:12])
 
 c6 = DataFrame(sample(reshape(_c6, :), 50), :auto)
 c6.t = sim[1].t
@@ -48,16 +61,53 @@ c12.t = sim[1].t
 
 @rput c6 c12 y xtrue
 
-# y = rand(joint_neg_binom(rate, xtrue[1:12] .* ntest))
-# post = get_post(12, y)
-# sig = get_sig(12, y)
+S0_samp = vec(fit12.value[:,1,:])
+beta_samp = vec(fit12.value[:,2,:])
+alpha_samp = vec(fit12.value[:,3,:])
+@rput S0_samp beta_samp alpha_samp
 
-# logpdf(post, vcat(θtrue...)) - logpdf(joint_prior(pdist), vcat(θtrue...))
+## Sensitivity plot
 
-logcomp = map(1:100) do _
-    logpost = logpdf(get_post(12), vcat(θtrue...))
-    logpri = logpdf(joint_prior(pdist), vcat(θtrue...))
-    return (;logpost, logpri)
-end |> DataFrame
+pdist = SIRParamDistribution(;S₀=Uniform(0.1, 0.9), β=Uniform(0.3, 3), α=Uniform(0.05, 0.3))
+u₀ = match_initial_values(pdist, θtrue)
+p = match_parameters(pdist, θtrue)
+prob = ODEProblem(fiip,u0,(0.0,10.0),p)
 
-@rput logcomp
+true_prob = de_problem(pdist, θtrue)
+y = rand(lik(solve_de_problem(pdist, θtrue; saveat=1, save_idxs=2).u, 31))
+
+function ℓoft(x, y, t)
+    _prob = remake(true_prob, u0=[x[1], pdist.I₀], p=x[2:end])
+    sol = solve(_prob, Tsit5(), reltol=1e-6, abstol=1e-6, saveat=1, save_idxs=2)
+    logpdf(lik(sol.u, t), y[1:t])
+end
+
+lik(x, t) = joint_poisson(1000 * x[1:t])
+
+dels = []
+for i=1:250_000
+    y = rand(lik(solve_de_problem(pdist, θtrue; saveat=1, save_idxs=2).u, 31))
+    ∇ℓoft = map(1:31) do t
+        ForwardDiff.gradient(x->ℓoft(x, y, t), vcat(θtrue.S₀, p))
+    end
+    push!(dels, ∇ℓoft)
+end
+
+μdel = reduce((a, b)->a .+ b, dels) ./ length(dels)
+plot(vecvec_to_mat(μdel))
+
+function inf_of_t(x, t)
+    _prob = remake(true_prob, u0=[x[1], pdist.I₀], p=x[2:end])
+    sol = solve(_prob, Tsit5(), reltol=1e-6, abstol=1e-6, saveat=0.1, save_idxs=2)
+    sol.u[t]
+end
+
+∇inf = map(1:301) do t
+    ForwardDiff.gradient(x->inf_of_t(x, t), vcat(θtrue.S₀, p))
+end
+
+plot(vecvec_to_mat(∇inf))
+
+sens_prob = ODEForwardSensitivityProblem(de_func(pdist), u₀, timespan(pdist), p)
+sol = solve(sens_prob, Tsit5())
+x, dp = extract_local_sensitivities(sol)

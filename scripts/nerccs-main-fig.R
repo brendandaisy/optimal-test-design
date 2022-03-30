@@ -2,6 +2,7 @@ library(tidyverse)
 library(ggthemes)
 library(tikzDevice)
 library(ggprism)
+library(cowplot)
 
 tikz_plot <- function(ggp, fname = 'plots/tikz', w = 8.5, h = 4) {
   tikz(paste0(fname, '.tex'), standAlone = TRUE, width = w, height = h)
@@ -25,17 +26,18 @@ true_inf <- c(
     0.029650387465228304, 0.024814410446680653, 0.02075294687536625, 0.017345265065778624, 0.014491436294653753, 0.012103619476697134, 0.010105741535796938
 )
 peak <- which.max(true_inf)
-tsteps <- seq(1, length(true_inf)-1, by=1)
+tsteps <- seq(0, length(true_inf)-1, by=1)
 
 known_lab <- list(
-    "Set([:α])" = "Unknown: beta, S0",
-    "Set([:β])" = "Unknown: alpha, S0",
-    "Set([:S₀])" = "Unknown: alpha, beta",
-    "Set{Symbol}()" = "Unknown: alpha, beta, S0"
+    "Set([:α])" = "$\\alpha$ known",
+    "Set([:β])" = "$\\beta$ known",
+    "Set([:S₀])" = "$S_0$ known",
+    "Set{Symbol}()" = "All unknown"
 )
 
 recover_sig <- function(df, var) {
-    df |> mutate("{{var}}":=str_replace_all({{var}}, "Any|\\[|\\]", "")) |>
+    df |>
+        mutate("{{var}}":=str_replace_all({{var}}, c("Any\\[" = "0,", "\\]" = ""))) |>
         separate({{var}}, str_c("u", as_label(enquo(var)), tsteps), sep=",", convert=TRUE, fill="right")
 }
 
@@ -50,20 +52,62 @@ wmarg <- marg |>
     recover_sig(sigalpha) |>
     recover_sig(sigS0) |>
     pivot_longer(contains("usig"), values_to="SIG") |>
-    mutate(var=str_extract(name, "sig[a-zS]+"), t=as.double(str_extract(name, "\\d+")))
-
-pdat <- wmarg |>
+    mutate(var=str_extract(name, "sig[a-zS]+"), t=as.double(str_extract(name, "\\d+"))) |>
     drop_na() |>
     group_by(t, var, obs_params, known) |>
     summarise(SIG=mean(SIG)) |>
     ungroup() |>
-    mutate(ntest=str_extract(obs_params, "n = \\d+")) |>
+    mutate(ntest=str_extract(obs_params, "n = \\d+"))
+
+pdat <- wmarg |>
+    filter(str_detect(ntest, "1000"), !str_detect(known, "alpha"))
+
+gg <- pdat |>
+    ggplot(aes(t, SIG, col=fct_recode(var, !!!texlab)), group=var) +
+    geom_vline(xintercept=peak, col="#ffa24b", linetype="dashed", size=1.3) +
+    geom_line(size=1.5, alpha=0.7) +
+    facet_wrap(~known, nrow=1) +
+    labs(
+        x="{\\fontfamily{cmss}\\selectfont\\large Days of observation}", 
+        y="{\\fontfamily{cmss}\\selectfont\\large Marginal Information Gain}",
+        col="{\\fontfamily{cmss}\\selectfont Parameter}"
+    ) +
+    theme_bw() +
+    theme(
+        # legend.background = element_blank(),
+        # legend.key = element_blank(),
+        # panel.grid.major.x = element_blank(),
+        strip.text = element_text(size=9, margin=margin(2, 0, 2, 0)),
+        panel.grid.minor.x = element_blank(),
+        legend.position = "bottom"
+    ) +
+    scale_color_manual(values=c("#d175ab", "#78cf8c", "#7f82db")) +
+    scale_x_continuous(guide = guide_prism_minor(), breaks=seq(0, 30, 5), minor_breaks=1:29) +
+    scale_y_continuous(breaks=seq(0, 4, 0.5))
+
+tikz_plot(gg, "main-fig", w=7.2, h=3.6)
+
+### Learning stages chart
+
+###
+
+pdat <- wmarg |>
     filter(str_detect(known, "alp.*bet.*S0"), str_detect(ntest, "1000")) |>
     bind_rows(tibble(t=rep(0, 3), var=c("sigalpha", "sigbeta", "sigS"), SIG=c(0, 0, 0)))
 
+inset <- wmarg |>
+    filter(known %in% c("Unknown: alpha, S0", "Unknown: alpha, beta"), str_detect(ntest, "1000")) |>
+    bind_rows(tibble(
+        t=rep(0, 4), 
+        known=c(rep("Unknown: alpha, S0", 2), rep("Unknown: alpha, beta", 2)),
+        var=c("sigalpha", "sigS", "sigalpha", "sigbeta"), 
+        SIG=rep(0, 4)
+    )) |>
+    mutate(known=fct_recode(known, "$\\beta^*$ known"="Unknown: alpha, S0", "$S_0^*$ known"="Unknown: alpha, beta"))
+
 texlab = c("$\\beta$" = "sigbeta", "$\\alpha$" = "sigalpha", "$S_0$" = "sigS")
 
-gg <- pdat |>
+ggmain <- pdat |>
     ggplot(aes(t, SIG, col=fct_recode(var, !!!texlab)), group=var) +
     geom_vline(xintercept=peak, col="#ffa24b", linetype="dashed", size=1.5) +
     geom_line(size=1.5, alpha=0.7) +
@@ -77,12 +121,39 @@ gg <- pdat |>
     theme(
         legend.background = element_blank(),
         legend.key = element_blank(),
-        panel.grid.major.x = element_blank(),
-        # panel.grid.minor.x = element_blank(),
-        legend.position = c(.88, 0.15)
+        # panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        legend.position = c(1.2, 0.18)
     ) +
-    scale_color_manual(values=c("#d175ab", "#d175ab", "#d175ab"))
+    scale_color_manual(values=c("#d175ab", "#78cf8c", "#7f82db")) +
     scale_x_continuous(guide = guide_prism_minor(), breaks=seq(0, 30, 5), minor_breaks=1:29) +
     scale_y_continuous(breaks=seq(0, 3, 0.5))
 
-tikz_plot(gg, "main-fig", w=4.1, h=3.5)
+ggin <- ggplot(inset, aes(t, SIG, col=fct_recode(var, !!!texlab)), group=var) +
+    geom_vline(xintercept=peak, col="#ffa24b", linetype="dashed", size=1.5) +
+    geom_line(size=1.1, alpha=0.7) +
+    labs(
+        x="{\\fontfamily{cmss}\\selectfont\\large Days}", 
+        y="{\\fontfamily{cmss}\\selectfont\\large MIG}",
+        col="{\\fontfamily{cmss}\\selectfont\\footnotesize Parameter}"
+    ) +
+    # xlim(0, 33) +
+    facet_wrap(~known, nrow=1) +
+    theme_bw() +
+    theme(
+        text = element_text(size=3),
+        legend.key = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "none",
+        # panel.background = element_blank(),
+        plot.background = element_blank(),
+        strip.text = element_text(size=5),
+        # strip.background = element_rect(size=5)
+    ) +
+    scale_color_manual(values=c("#d175ab", "#78cf8c", "#7f82db"))
+    # scale_x_continuous(breaks=seq(0, 30, 10)) +
+    # scale_y_continuous(breaks=seq(0, 3, 0.5))
+
+gg <- ggdraw() + draw_plot(ggmain) + draw_plot(ggin, x=0.12, y=0.64, width=0.45, height=.3)
+
+tikz_plot(gg, "main-fig", w=4.5, h=3.5)
