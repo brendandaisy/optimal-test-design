@@ -41,6 +41,7 @@ recover_sig <- function(df, var) {
         separate({{var}}, str_c("u", as_label(enquo(var)), tsteps), sep=",", convert=TRUE, fill="right")
 }
 
+(marg_org <- read_csv("_research/tmp/res.csv", na="missing"))
 (marg_org <- read_csv("data/sims/increasing-tspan-marg/results-03-25.csv", na="missing"))
 
 marg <- marg_org |>
@@ -54,13 +55,15 @@ wmarg <- marg |>
     pivot_longer(contains("usig"), values_to="SIG") |>
     mutate(var=str_extract(name, "sig[a-zS]+"), t=as.double(str_extract(name, "\\d+"))) |>
     drop_na() |>
-    group_by(t, var, obs_params, known) |>
+    group_by(t, var, obs_model, known) |>
     summarise(SIG=mean(SIG)) |>
     ungroup() |>
-    mutate(ntest=str_extract(obs_params, "n = \\d+"))
+    mutate(ntest=str_extract(obs_model, "\\d+"))
 
 pdat <- wmarg |>
     filter(str_detect(ntest, "1000"), !str_detect(known, "alpha"))
+
+texlab = c("$\\beta$" = "sigbeta", "$\\alpha$" = "sigalpha", "$S_0$" = "sigS")
 
 gg <- pdat |>
     ggplot(aes(t, SIG, col=fct_recode(var, !!!texlab)), group=var) +
@@ -104,8 +107,6 @@ inset <- wmarg |>
         SIG=rep(0, 4)
     )) |>
     mutate(known=fct_recode(known, "$\\beta^*$ known"="Unknown: alpha, S0", "$S_0^*$ known"="Unknown: alpha, beta"))
-
-texlab = c("$\\beta$" = "sigbeta", "$\\alpha$" = "sigalpha", "$S_0$" = "sigS")
 
 ggmain <- pdat |>
     ggplot(aes(t, SIG, col=fct_recode(var, !!!texlab)), group=var) +

@@ -9,10 +9,10 @@ import Dates: today, format
 
 include(srcdir("watson-tools.jl"))
 include(srcdir("cond-simulations.jl"))
-# ENV["JULIA_WORKER_TIMEOUT"] = 240.
+# include(srcdir("observation-dicts.jl"))
 
 function inct_marg_exper!(d, cond_sims; N=100, M=100)
-    @unpack θtrue, known, obs_model, obs_params = d
+    @unpack θtrue, known, obs_model = d
     pset = Set(keys(θtrue))
     true_sim = cond_sims[pset].u
     pri_sims = cond_sims[known]
@@ -22,44 +22,38 @@ function inct_marg_exper!(d, cond_sims; N=100, M=100)
         lab = "sig-"*string(θᵢ)
         d[lab] = []
         for imax ∈ 2:length(true_sim) # for each timespan
-            obsp = merge(obs_params, (maxt=imax,))
-            likelihood = inct_dict[obs_model]
-            push!(d[lab], local_marginal_utility(true_sim, cond_simᵢ, pri_sims, likelihood; N, M, obs_params=obsp))
+            likelihood = (sim, m)->obs_tspan(sim, m, imax)
+            push!(
+                d[lab], 
+                local_marginal_utility(true_sim, cond_simᵢ, pri_sims, likelihood; N, M, obs_mod=obs_model)
+            )
         end
     end
 end
 
-subfolder = "diff-priors"
+subfolder = ""
 θtrue = (S₀=0.6, β=1.25, α=0.2)
-θprior = (S₀=Uniform(0.3, 0.75), β=Uniform(0.9, 1.5), α=Uniform(0.05, 0.7))
+θprior = (S₀=Beta(0.1, 0.9), β=Uniform(0.3, 3.), α=Uniform(0.05, 0.3))
 dekwargs = (saveat=1, save_idxs=2) # observations may occur at Δt=1 intervals at comparment 2 (infectious)
-known = [Set([:α]), Set([:β]), Set([:S₀]), Set{Symbol}()]
+known = Set{Symbol}()
 # obs_model = "neg_binom"
 # obs_params = [(r=rate, n=ntest) for rate ∈ [1, 10] for ntest ∈ [10, 100, 1000]]
-obs_model = "poisson"
-obs_params = [(n=ntest,) for ntest ∈ [100, 1000]]
+obs_model = PoissonTests(1000.)
 
-cond_sims = get_cond_sims(θtrue, θprior, 4000; dekwargs...)
+cond_sims = get_cond_sims(θtrue, θprior, 40_000; dekwargs...)
 
-factors = @strdict θtrue known obs_model obs_params
+factors = @strdict θtrue known obs_model
 
 vacc = Threads.nthreads() > 4
 if vacc
-    # @everywhere using DrWatson
-    # @everywhere begin
-    #     @quickactivate "optimal-test-design"
-    #     using Distributions, DEParamDistributions
-    # end
     fname = datadir("sims", "increasing-tspan-marg")
     safe = true
 else
-    fname = "_research/tmp"
+    fname = "_research/tmp/"*subfolder
     safe = false
 end
 
-include(srcdir("observation-dicts.jl"))
-
 for d ∈ dict_list(factors)
-    inct_marg_exper!(d, cond_sims; N=500, M=500)
+    inct_marg_exper!(d, cond_sims; N=5000, M=5000)
     tagsave("$fname/$(mysavename(d))", d; safe)
 end

@@ -8,7 +8,7 @@ Random.seed!(1234)
 
 θtrue = (S₀=0.6, β=1.25, α=0.2)
 pdist = SIRParamDistribution(;S₀=Uniform(0.1, 0.9), β=Uniform(0.3, 3), α=0.2)
-lik(x, t=3) = joint_poisson(x[1:t] * 1000)
+lik(x, t=3) = obs_tspan(x, PoissonTests(1000.), t)
 
 xtrue = solve_de_problem(pdist, θtrue; saveat=1, save_idxs=2).u
 y = rand(lik(xtrue))
