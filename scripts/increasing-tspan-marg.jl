@@ -33,7 +33,7 @@ end
 
 subfolder = ""
 θtrue = (S₀=0.6, β=1.25, α=0.2)
-θprior = (S₀=Beta(0.1, 0.9), β=Uniform(0.3, 3.), α=Uniform(0.05, 0.3))
+θprior = (S₀=Uniform(0.1, 0.9), β=Uniform(0.3, 3.), α=Uniform(0.05, 0.3))
 dekwargs = (saveat=1, save_idxs=2) # observations may occur at Δt=1 intervals at comparment 2 (infectious)
 known = Set{Symbol}()
 # obs_model = "neg_binom"
@@ -46,7 +46,7 @@ factors = @strdict θtrue known obs_model
 
 vacc = Threads.nthreads() > 4
 if vacc
-    fname = datadir("sims", "increasing-tspan-marg")
+    fname = datadir("sims", "increasing-tspan-marg", subfolder)
     safe = true
 else
     fname = "_research/tmp/"*subfolder
@@ -54,6 +54,6 @@ else
 end
 
 for d ∈ dict_list(factors)
-    inct_marg_exper!(d, cond_sims; N=5000, M=5000)
+    inct_marg_exper!(d, cond_sims; N=2500, M=2500)
     tagsave("$fname/$(mysavename(d))", d; safe)
 end

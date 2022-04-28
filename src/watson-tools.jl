@@ -3,7 +3,7 @@
 todaystr() = format(today(), "mm-dd")
 
 mysavename(d; ignores=(:dekwargs, :θprior)) = replace(
-    savename(d,  "jld2"; connector=" || ", allowedtypes=(String, Tuple, NamedTuple, Int, Set), ignores), 
+    savename(d,  "jld2"; connector=" || ", allowedtypes=(String, Tuple, NamedTuple, Int, Set, ObservationModel), ignores), 
     " = " => "="
 )
 
