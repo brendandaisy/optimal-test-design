@@ -42,7 +42,7 @@ recover_sig <- function(df, var) {
 }
 
 (marg_org <- read_csv("_research/tmp/res.csv", na="missing"))
-(marg_org <- read_csv("data/sims/increasing-tspan-marg/results-03-25.csv", na="missing"))
+(marg_org <- read_csv("data/sims/increasing-tspan-marg/results-04-28.csv", na="missing"))
 
 marg <- marg_org |>
     mutate(known=map_chr(known, ~known_lab[[.x]])) |>

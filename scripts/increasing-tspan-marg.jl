@@ -12,7 +12,7 @@ include(srcdir("cond-simulations.jl"))
 # include(srcdir("observation-dicts.jl"))
 
 function inct_marg_exper!(d, cond_sims; N=100, M=100)
-    @unpack θtrue, known, obs_model = d
+    @unpack θtrue, known, true_obs_model, obs_model = d
     pset = Set(keys(θtrue))
     true_sim = cond_sims[pset].u
     pri_sims = cond_sims[known]
@@ -23,9 +23,10 @@ function inct_marg_exper!(d, cond_sims; N=100, M=100)
         d[lab] = []
         for imax ∈ 2:length(true_sim) # for each timespan
             likelihood = (sim, m)->obs_tspan(sim, m, imax)
-            push!(
-                d[lab], 
-                local_marginal_utility(true_sim, cond_simᵢ, pri_sims, likelihood; N, M, obs_mod=obs_model)
+            push!(d[lab], local_marginal_utility(
+                    true_sim, cond_simᵢ, pri_sims, likelihood; 
+                    N, M, obs_mod=true_obs_model, latent_obs_mod=obs_model
+                )
             )
         end
     end
@@ -38,11 +39,13 @@ dekwargs = (saveat=1, save_idxs=2) # observations may occur at Δt=1 intervals a
 known = Set{Symbol}()
 # obs_model = "neg_binom"
 # obs_params = [(r=rate, n=ntest) for rate ∈ [1, 10] for ntest ∈ [10, 100, 1000]]
-obs_model = PoissonTests(1000.)
+true_obs_model = PoissonBiasMult(1000., 3.)
+obs_model = PoissonBiasMult(1000., truncated(Gamma(2, 1), 1, Inf))
 
 cond_sims = get_cond_sims(θtrue, θprior, 40_000; dekwargs...)
 
-factors = @strdict θtrue known obs_model
+# factors = @strdict θtrue known obs_model
+factors = @strdict θtrue known true_obs_model obs_model 
 
 vacc = Threads.nthreads() > 4
 if vacc
@@ -54,6 +57,6 @@ else
 end
 
 for d ∈ dict_list(factors)
-    inct_marg_exper!(d, cond_sims; N=2500, M=2500)
+    inct_marg_exper!(d, cond_sims; N=1500, M=1500)
     tagsave("$fname/$(mysavename(d))", d; safe)
 end
