@@ -11,7 +11,7 @@ tikz_plot <- function(ggp, fname = 'plots/tikz', w = 8.5, h = 4) {
   system(paste0('pdflatex ', fname, '.tex'))
 }
 
-theme_sig <- theme(
+theme_md <- theme(
     panel.grid = element_blank(),
     axis.line = element_line(arrow=arrow(type="closed", angle=17, length=unit(0.13, "in")), size=2),
     panel.background = element_rect(fill="white"),
@@ -29,44 +29,45 @@ peak <- which.max(true_inf)
 tsteps <- seq(0, length(true_inf)-1, by=1)
 
 known_lab <- list(
-    "Set([:α])" = "$\\alpha$ known",
-    "Set([:β])" = "$\\beta$ known",
-    "Set([:S₀])" = "$S_0$ known",
-    "Set{Symbol}()" = "All unknown"
+    "(:α)" = "$\\alpha$ known",
+    "(:β)" = "$\\beta$ known",
+    "(:S₀)" = "$S_0$ known",
+    "()" = "All unknown"
 )
 
-recover_sig <- function(df, var) {
+recover_md <- function(df, var) {
     df |>
-        mutate("{{var}}":=str_replace_all({{var}}, c("Any\\[" = "0,", "\\]" = ""))) |>
+        mutate("{{var}}":=str_replace_all({{var}}, c("Any\\["="0,", "f"="e", "\\]"=""))) |>
         separate({{var}}, str_c("u", as_label(enquo(var)), tsteps), sep=",", convert=TRUE, fill="right")
 }
 
 (marg_org <- read_csv("_research/tmp/res.csv", na="missing"))
-(marg_org <- read_csv("data/sims/increasing-tspan-marg/results-04-28.csv", na="missing"))
+(marg_org <- read_csv("data/sims/increasing-tspan-marg/results-10-02.csv", na="missing"))
 
 marg <- marg_org |>
     mutate(known=map_chr(known, ~known_lab[[.x]])) |>
-    select(-path, true=θtrue, sigbeta=`sig-β`, sigalpha=`sig-α`, sigS0=`sig-S₀`)
+    select(-path, true=θtrue, mdbeta=`md-β`, mdalpha=`md-α`, mdS0=`md-S₀`)
 
 wmarg <- marg |>
-    recover_sig(sigbeta) |>
-    recover_sig(sigalpha) |>
-    recover_sig(sigS0) |>
-    pivot_longer(contains("usig"), values_to="SIG") |>
-    mutate(var=str_extract(name, "sig[a-zS]+"), t=as.double(str_extract(name, "\\d+"))) |>
+    recover_md(mdbeta) |>
+    recover_md(mdalpha) |>
+    recover_md(mdS0) |>
+    mutate(umdalpha10=as.double(umdalpha10))
+    pivot_longer(contains("umd"), values_to="mdiv") |>
+    mutate(var=str_extract(name, "md[a-zS]+"), t=as.double(str_extract(name, "\\d+"))) |>
     drop_na() |>
-    group_by(t, var, obs_model, known) |>
-    summarise(SIG=mean(SIG)) |>
+    group_by(t, var, obs_mod, known) |>
+    summarise(mdiv=mean(mdiv)) |>
     ungroup() |>
-    mutate(ntest=str_extract(obs_model, "\\d+"))
+    mutate(ntest=str_extract(obs_mod, "\\d+"))
 
 pdat <- wmarg |>
     filter(str_detect(ntest, "1000"), !str_detect(known, "alpha"))
 
-texlab = c("$\\beta$" = "sigbeta", "$\\alpha$" = "sigalpha", "$S_0$" = "sigS")
+texlab = c("$\\beta$" = "mdbeta", "$\\alpha$" = "mdalpha", "$S_0$" = "mdS")
 
-gg <- pdat |>
-    ggplot(aes(t, SIG, col=fct_recode(var, !!!texlab)), group=var) +
+gg <- wmarg |>
+    ggplot(aes(t, mdiv, col=fct_recode(var, !!!texlab)), group=var) +
     geom_vline(xintercept=peak, col="#ffa24b", linetype="dashed", size=1.3) +
     geom_line(size=1.5, alpha=0.7) +
     facet_wrap(~known, nrow=1) +

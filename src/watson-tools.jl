@@ -1,13 +1,14 @@
 ## To be included in scripts
+using Dates
 
-todaystr() = format(today(), "mm-dd")
+todaystr() = Dates.format(today(), "mm-dd")
 
-function mysavename(d; ignores=(:dekwargs, :θprior)) 
+function mysavename(d; ignores=(:dekwargs,)) 
     replace(
         savename(
             d,  "jld2"; 
             connector=" || ", 
-            allowedtypes=(String, Tuple, NamedTuple, Int, AbstractLatentModel, AbstractObservationModel), 
+            allowedtypes=(Any,),
             ignores
         ), 
     " = " => "="

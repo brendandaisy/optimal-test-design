@@ -3,8 +3,8 @@ using DrWatson
 using DEParamDistributions
 using NamedTupleTools
 
-function joint_cond(α, β, R)
-    pdf(Uniform(0.1, 0.4), α) * pdf(Uniform(0.3, 2.), β) * α/β * pdf(Uniform(0.1, 0.9), α*R/β)
+function prob_αβ_cond_R(α, β; R, prior)
+    pdf(prior.α, α) * pdf(prior.β, β) * α/β * pdf(prior.S₀, α*R/β)
 end
 
 function accept_reject(sampler, target; M=100, N=100)
