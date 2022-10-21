@@ -8,7 +8,7 @@ using Distributed
 
 include(srcdir("watson-tools.jl"))
 
-function inct_marg_exper!(d; N=100, dekwargs...)
+function inct_single_param_exper!(d; N=100, dekwargs...)
     @unpack θtrue, known, lat_mod, obs_mod = d
     ϕs = setdiff(Set(keys(θtrue)), Set(known)) # each variable to compute δ for, i.e. each unknown var
     
@@ -67,6 +67,6 @@ end
 
 for d ∈ dict_list(factors)
     fname = mysavename(d)
-    inct_marg_exper!(d; N=3000, dekwargs...)
+    inct_single_param_exper!(d; N=3000, dekwargs...)
     tagsave("$fdir/$fname", d; safe)
 end

@@ -1,5 +1,6 @@
 ## To be included in scripts
 using Dates
+using CSV
 
 todaystr() = Dates.format(today(), "mm-dd")
 
@@ -11,7 +12,9 @@ function mysavename(d; ignores=(:dekwargs,))
             allowedtypes=(Any,),
             ignores
         ), 
-    " = " => "="
+    " = " => "=",
+    " ± " => "±",
+    r"\{\w+\d+\}" => ""
     )
 end
 

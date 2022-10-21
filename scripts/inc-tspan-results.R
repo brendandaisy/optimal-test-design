@@ -4,11 +4,14 @@ library(tikzDevice)
 library(ggprism)
 library(cowplot)
 
-tikz_plot <- function(ggp, fname = 'plots/tikz', w = 8.5, h = 4) {
+tikz_plot <- function(ggp, fname='tikz', w=8.5, h=4, dir="plots") {
+  cur_wd <- getwd()
+  setwd(paste0(cur_wd, "/", dir))
   tikz(paste0(fname, '.tex'), standAlone = TRUE, width = w, height = h)
   print(ggp)
   dev.off()
   system(paste0('pdflatex ', fname, '.tex'))
+  setwd(cur_wd)
 }
 
 theme_md <- theme(
@@ -36,41 +39,46 @@ known_lab <- list(
 )
 
 recover_md <- function(df, var) {
-    df |>
-        mutate("{{var}}":=str_replace_all({{var}}, c("Any\\["="0,", "f"="e", "\\]"=""))) |>
-        separate({{var}}, str_c("u", as_label(enquo(var)), tsteps), sep=",", convert=TRUE, fill="right")
+  df |>
+    mutate("{{var}}":=str_replace_all({{var}}, c("Any\\["="0,", "f"="e", "\\]"=""))) |>
+    separate({{var}}, str_c("u", as_label(enquo(var)), tsteps), sep=",", convert=TRUE, fill="right")
 }
 
-(marg_org <- read_csv("_research/tmp/res.csv", na="missing"))
-(marg_org <- read_csv("data/sims/increasing-tspan-marg/results-10-02.csv", na="missing"))
+# (res1 <- read_csv("_research/tmp/res.csv", na="missing"))
+(res1 <- read_csv("data/sims/increasing-tspan-marg/results-10-02.csv", na="missing"))
+(res2 <- read_csv("data/sims/increasing-tspan-marg/results-10-11.csv", na="missing"))
 
-marg <- marg_org |>
-    mutate(known=map_chr(known, ~known_lab[[.x]])) |>
-    select(-path, true=θtrue, mdbeta=`md-β`, mdalpha=`md-α`, mdS0=`md-S₀`)
+res <- res1 |> 
+  rename(mdbeta=`md-β`, mdalpha=`md-α`, mdS0=`md-S₀`) |> 
+  bind_cols(select(res2, mdR=`md-R`, mdjoint=`md-joint`))
+    # mutate(known=map_chr(known, ~known_lab[[.x]])) |>
+    # select(-path, true=θtrue, mdbeta=`md-β`, mdalpha=`md-α`, mdS0=`md-S₀`)
 
-wmarg <- marg |>
-    recover_md(mdbeta) |>
-    recover_md(mdalpha) |>
-    recover_md(mdS0) |>
-    mutate(umdalpha10=as.double(umdalpha10))
-    pivot_longer(contains("umd"), values_to="mdiv") |>
-    mutate(var=str_extract(name, "md[a-zS]+"), t=as.double(str_extract(name, "\\d+"))) |>
-    drop_na() |>
-    group_by(t, var, obs_mod, known) |>
-    summarise(mdiv=mean(mdiv)) |>
-    ungroup() |>
-    mutate(ntest=str_extract(obs_mod, "\\d+"))
+reduce(list(mdalpha, mdbeta, mdS0, mdR, mdjoint), recover_md, .init=res) |> 
+  pivot_longer(contains("umd"), values_to="mdiv")
 
-pdat <- wmarg |>
-    filter(str_detect(ntest, "1000"), !str_detect(known, "alpha"))
+res_long <- res |>
+  recover_md(mdalpha) |>
+  recover_md(mdbeta) |>
+  recover_md(mdS0) |>
+  recover_md(mdR) |>
+  recover_md(mdjoint) |>
+  pivot_longer(contains("umd"), values_to="mdiv") |>
+  mutate(var=str_extract(name, "md[a-zRS]+"), t=as.double(str_extract(name, "\\d+"))) |>
+  mutate(ntest=str_extract(obs_mod, "\\d+")) |> 
+  select(-obs_mod, -name)
 
-texlab = c("$\\beta$" = "mdbeta", "$\\alpha$" = "mdalpha", "$S_0$" = "mdS")
+texlab = c(
+  "$\\beta$"="mdbeta", "$\\alpha$"="mdalpha", "$S_0$"="mdS", 
+  "$\\mathcal{R}$"="mdR", "$(\\alpha, \\beta, S_0)$"="mdjoint"
+)
 
-gg <- wmarg |>
+gg <- res_long |>
     ggplot(aes(t, mdiv, col=fct_recode(var, !!!texlab)), group=var) +
+  # ggplot(aes(t, mdiv, col=var, group=var)) +
     geom_vline(xintercept=peak, col="#ffa24b", linetype="dashed", size=1.3) +
     geom_line(size=1.5, alpha=0.7) +
-    facet_wrap(~known, nrow=1) +
+    # facet_wrap(~known, nrow=1) +
     labs(
         x="{\\fontfamily{cmss}\\selectfont\\large Days of observation}", 
         y="{\\fontfamily{cmss}\\selectfont\\large Marginal Information Gain}",
@@ -85,8 +93,8 @@ gg <- wmarg |>
         panel.grid.minor.x = element_blank(),
         legend.position = "bottom"
     ) +
-    scale_color_manual(values=c("#d175ab", "#78cf8c", "#7f82db")) +
-    scale_x_continuous(guide = guide_prism_minor(), breaks=seq(0, 30, 5), minor_breaks=1:29) +
-    scale_y_continuous(breaks=seq(0, 4, 0.5))
+    # scale_color_manual(values=c("#d175ab", "#78cf8c", "#7f82db")) +
+    scale_x_continuous(guide = guide_prism_minor(), breaks=seq(0, 30, 5), minor_breaks=1:29)
+    # scale_y_continuous(breaks=seq(0, 4, 0.5))
 
-tikz_plot(gg, "increasing-tspan", w=7.2, h=3.6)
+tikz_plot(gg, "increasing-tspan-new", w=4.2, h=3.6)

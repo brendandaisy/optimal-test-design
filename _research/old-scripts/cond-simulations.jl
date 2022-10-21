@@ -3,34 +3,6 @@ using DrWatson
 using DEParamDistributions
 using NamedTupleTools
 
-function prob_αβ_cond_R(α, β; R, prior)
-    pdf(prior.α, α) * pdf(prior.β, β) * α/β * pdf(prior.S₀, α*R/β)
-end
-
-function accept_reject(sampler, target; M=100, N=100)
-    ret = []
-    for _ in 1:N
-        s = rand(sampler)
-        u = rand()
-        while u >= target(s) / (M*pdf(sampler, s))
-            s = rand(sampler)
-            u = rand()
-        end
-        push!(ret, s)
-    end
-    return (first.(ret), last.(ret))
-end
-
-α = Uniform(0.1, 0.4)
-β = Uniform(0.3, 2.)
-
-αcond, βcond = accept_reject(product_distribution([α, β]), x->joint_cond(x[1], x[2], 3.))
-Scond = (αcond * 3) ./ βcond
-
-(βcond .* Scond) ./ αcond
-
-density(βcond)
-
 tup2str(nt::Tuple) = replace(string(nt), r"\(|\)|\:|,\)" => "")
 
 separate(nt::NamedTuple) = [(k, ) for k ∈ keys(nt)]
