@@ -14,14 +14,6 @@ tikz_plot <- function(ggp, fname='tikz', w=8.5, h=4, dir="plots") {
   setwd(cur_wd)
 }
 
-theme_md <- theme(
-    panel.grid = element_blank(),
-    axis.line = element_line(arrow=arrow(type="closed", angle=17, length=unit(0.13, "in")), size=2),
-    panel.background = element_rect(fill="white"),
-    axis.ticks = 
-    axis.text = element_blank(),
-)
-
 true_inf <- c(
     0.01, 0.017234986028274994, 0.029226916688214286, 0.0482619354074302, 0.07644676001950913, 0.11397801673090434, 0.15694203765403592,
     0.197068585361762, 0.22556384374277325, 0.23791293991026669, 0.2351898235396991, 0.22162345300496464, 0.2018696959400936, 

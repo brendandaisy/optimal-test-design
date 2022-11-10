@@ -2,7 +2,7 @@
 
 julia_version = "1.8.0"
 manifest_format = "2.0"
-project_hash = "bf4d9d891004b5203d6416420b4aa3956e38f45e"
+project_hash = "2baa4fb29197e13dce54213e94741eea5e38671a"
 
 [[deps.ASL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -208,6 +208,12 @@ deps = ["Downloads", "JSON", "VersionParsing"]
 git-tree-sha1 = "6e47d11ea2776bc5627421d59cdcc1296c058071"
 uuid = "8f4d0f93-b110-5947-807f-2305c1781a2d"
 version = "1.7.0"
+
+[[deps.ConditionalTransform]]
+deps = ["Distributions"]
+path = "/home/brendaisy/.julia/dev/ConditionalTransform/"
+uuid = "273a622a-0ef2-4f07-8304-6a26c740143a"
+version = "0.1.0"
 
 [[deps.ConstructionBase]]
 deps = ["LinearAlgebra"]
@@ -608,6 +614,11 @@ deps = ["LinearAlgebra", "Printf"]
 git-tree-sha1 = "49b0c1dd5c292870577b8f58c51072bd558febb9"
 uuid = "0b1a1467-8014-51b9-945f-bf0ae24f4b77"
 version = "0.5.4"
+
+[[deps.LambertW]]
+git-tree-sha1 = "2d9f4009c486ef676646bca06419ac02061c088e"
+uuid = "984bce1d-4616-540c-a9ee-88d1112d94c9"
+version = "0.4.5"
 
 [[deps.LayoutPointers]]
 deps = ["ArrayInterface", "ArrayInterfaceOffsetArrays", "ArrayInterfaceStaticArrays", "LinearAlgebra", "ManualMemory", "SIMDTypes", "Static"]
