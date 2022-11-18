@@ -36,8 +36,7 @@ end
 addprocs(8)
 
 subfolder = ""
-θtrue = (S₀=0.6f0, β=1.25f0, α=0.2f0)
-θprior = (S₀=Uniform(0.1f0, 0.9f0), β=Uniform(0.3f0, 3f0), α=Uniform(0.05f0, 0.3f0))
+
 lat_mod = SIRModel{Float32}(
     S₀=Particles(60_000, θprior.S₀), 
     β=Particles(60_000, θprior.β), 

@@ -4,6 +4,7 @@ precompile.jl
 slurmjob
 *.Rproj
 .Rhistory
+*.code-workspace
 
 ################################################################################
 #                          DrWatson Project Structure                          #

@@ -1,6 +1,6 @@
 ## To be included in scripts
 using Dates
-using CSV
+using CSV, DataFrames
 
 todaystr() = Dates.format(today(), "mm-dd")
 
