@@ -5,6 +5,7 @@ using DiffEqInformationTheory
 using ConditionalTransform
 using Distributions, MonteCarloMeasurements
 using NamedTupleTools
+using Optim
 
 include(srcdir("watson-tools.jl"))
 include(srcdir("transform-funcs.jl"))
@@ -77,26 +78,32 @@ function ident_over_θtrue(θtrue_set, θprior, obs_mod; N=100, M=60_000)
 
     ret = []
     for θtrue in θtrue_set
-        inf_true = solve(lat_mod, θtrue; save_idxs=2, saveat=1).u
+        @show θtrue
+        sol_true = solve(lat_mod, θtrue; save_idxs=2, dense=true)
+        f = t -> -sol_true(t)
+        peak_t = ceil(Int, optimize(f, 0, 30).minimizer)
+
+        inf_true = sol_true(0:peak_t).u
         y = Particles(10_000, observe_dist(obs_mod; observe_params(obs_mod, inf_true)...))
         inf_conds = solve_inf_cond(θtrue, θprior, lat_mod)
         
-        for tmax in [10]
-            @show tmax
-            ts_idx = 1:(tmax+1)
-            ynew = bootstrap(y[ts_idx], N)
-            for lab in keys(inf_conds)
-                δ = marginal_divergence(ynew, inf_conds[lab][ts_idx], inf_pri[ts_idx], obs_mod)
-                push!(ret, merge(θtrue, (lab=lab, t=tmax, md=δ)))
-            end
+        ts_idx = 1:(peak_t+1)
+        for lab in keys(inf_conds)
+            ynew = bootstrap(y, N)
+            δ = marginal_divergence(ynew, inf_conds[lab][ts_idx], inf_pri[ts_idx], obs_mod)
+            push!(ret, merge(θtrue, (lab=lab, t=peak_t, md=δ)))
         end
     end
     return ret
 end
 
 θprior = (α=Uniform(0.05f0, 0.85f0), β=Uniform(0.3f0, 1.5f0), S₀=Uniform(0.1f0, 0.99f0))
-θtrue_set = [(α=0.2, β=b, S₀=S) for b in Float32.(0.3:0.2:1.5) for S in Float32.(0.1:0.2:0.9)]
+# θtrue_set = [(α=0.2, β=b, S₀=S) for b in Float32.(0.3:0.2:1.5) for S in Float32.(0.1:0.2:0.9)]
+θtrue_set = [(α=0.2f0, β=0.7f0, S₀=0.3f0), (α=0.2f0, β=0.3f0, S₀=0.9f0), (α=0.2f0, β=0.5f0, S₀=0.5f0)]
+# tmp = solve(SIRModel{Float32}(α=0.2f0, β=0.3, S₀=0.7), save_idxs=2, dense=true)
+# plot(tmp)
+# θtrue_set = filter(x->reff(x...) > 0.9, θtrue_set)
 obs_mod = PoissonTests(1000)
 
-res = ident_over_θtrue(θtrue_set, θprior, obs_mod; N=2000, M=60_000)
-CSV.write(datadir("sims", "gain-var-reff.csv"), DataFrame(res))
+res = ident_over_θtrue(θtrue_set, θprior, obs_mod; N=3000, M=60_000)
+CSV.write(datadir("sims", "gain-by-peak-check-out.csv"), DataFrame(res))

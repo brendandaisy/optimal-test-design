@@ -28,6 +28,19 @@ end
 # θtrue = (S₀=1f0, β=0.2f0, α=0.2f0)
 θprior = (α=Uniform(0.05f0, 0.85f0), β=Uniform(0.3f0, 1.5f0), S₀=Uniform(0.1f0, 0.99f0))
 
+#= Basic Reproductive Number =#
+tpeak_true = peak_timing(θtrue.α, θtrue.β, θtrue.S₀)
+αcond, βcond, Scond = sample_cond_f(θprior, tpeak_true, inv_peak_timing, d_inv_peak_timing; pivot=:β, nsamples=10_000, acc_rate=10)
+sir_cond = SIRModel{Float32}(
+    S₀=Particles(Float32.(Scond)), 
+    β=Particles(Float32.(βcond)), 
+    α=Particles(Float32.(αcond))
+)
+# inf_cond = solve(resample(sir_cond, 500); save_idxs=2, saveat=0.2)
+
+save_samples("peak-timing-more2", αcond, βcond, Scond)
+save_sims("peak-timing", inf_cond)
+
 asamp, bsamp, Ssamp = rand.(values(θprior), 5000)
 Rpri = reff.(asamp, bsamp, Ssamp)
 sum(Rpri .> 1) / 5000
@@ -44,8 +57,13 @@ for θᵢ in keys(θtrue) # setup for ind params
     save_sims(string(θᵢ), inf_cond)
 end
 
+#= Full prior simulations =#
+inf_pri = solve(lat_mod; save_idxs=2, saveat=0.2)
+CSV.write("data/sims/sim-full-prior.csv", DataFrame(Matrix(inf_pri.u), string.(inf_pri.t)))
+
 #= Sample a single y|θtrue for post fitting =#
-inf_true = solve(lat_mod, θtrue; save_idxs=2, saveat=1).u
+inf_true = solve(lat_mod, θtrue; save_idxs=2, saveat=0.2).u
+println(inf_true)
 ydist = observe_dist(obs_mod; observe_params(obs_mod, inf_true)...)
 ysamp = rand(ydist)
 println(ysamp)

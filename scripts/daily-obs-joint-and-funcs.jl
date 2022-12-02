@@ -5,7 +5,6 @@ using DiffEqInformationTheory
 using ConditionalTransform
 using Distributions, MonteCarloMeasurements
 using NamedTupleTools
-using Distributed
 
 include(srcdir("watson-tools.jl"))
 include(srcdir("transform-funcs.jl"))
@@ -35,12 +34,12 @@ function inc_tspan_exper!(config; N=100, M=60_000)
     @info "Done sampling P(y|θtrue)"
 
     inf_conds = Dict()
-    for θᵢ in keys(θtrue) # setup for ind params
-        lab = "md-"*string(θᵢ)
-        config[lab] = []
-        θcond = NamedTupleTools.select(θtrue, (θᵢ,))
-        inf_conds[lab] = solve(lat_mod, θcond; save_idxs=2, saveat=1).u # simulate x∣θᵢ
-    end
+    # for θᵢ in keys(θtrue) # setup for ind params
+    #     lab = "md-"*string(θᵢ)
+    #     config[lab] = []
+    #     θcond = NamedTupleTools.select(θtrue, (θᵢ,))
+    #     inf_conds[lab] = solve(lat_mod, θcond; save_idxs=2, saveat=1).u # simulate x∣θᵢ
+    # end
     for vt in keys(var_transforms) # setup for param transformations
         lab = "md-"*vt
         config[lab] = []
@@ -61,29 +60,17 @@ function inc_tspan_exper!(config; N=100, M=60_000)
     end
 end
 
-addprocs(7)
-
-subfolder = ""
 θtrue = (α=0.2f0, β=1.25f0, S₀=0.6f0)
 θprior = (α=Uniform(0.05f0, 0.85f0), β=Uniform(0.3f0, 1.5f0), S₀=Uniform(0.1f0, 0.99f0))
 obs_mod = PoissonTests(1000)
-var_transforms = get_var_transforms()
+# var_transforms = get_var_transforms()
+var_transforms = Dict("peak-timing" => [peak_timing, inv_peak_timing, d_inv_peak_timing])
 
-if nprocs() > 1
-    @everywhere using DrWatson
-    @everywhere begin
-        @quickactivate "optimal-test-design"
-        using DiffEqInformationTheory
-        using Distributions, MonteCarloMeasurements
-    end
-    fdir = datadir("sims", "increasing-tspan-marg", subfolder)
-    safe = true
-else
-    fdir = "_research/tmp/"*subfolder
-    safe = false
-end
+fdir = datadir("sims", "increasing-tspan-marg")
 
 exper = @strdict θtrue θprior obs_mod var_transforms
 fname = mysavename(exper; ignores=[:var_transforms])
 inc_tspan_exper!(exper; N=3000)
-tagsave("$fdir/$fname", exper; safe)
+tagsave("$fdir/$fname", exper; safe=true)
+
+

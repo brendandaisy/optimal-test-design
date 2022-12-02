@@ -40,6 +40,7 @@ priors <- tibble(
     `rep-number`=rep_number(α, β),
     `outbreak-size`=outbreak_size(α, β, `S₀`),
     `peak-intensity`=peak_intensity(α, β, `S₀`),
+    `peak-timing`=read_csv("_research/tpeak-pri.csv")$V,
     `growth-rate`=growth_rate(α, β, `S₀`)
 ) |> 
     pivot_longer(everything(), "var") |>
@@ -69,32 +70,11 @@ true_vals <- tibble(
     `rep-number`=rep_number(α, β),
     `outbreak-size`=outbreak_size(α, β, `S₀`),
     `peak-intensity`=peak_intensity(α, β, `S₀`),
+    `peak-timing`=9.29,
     `growth-rate`=growth_rate(α, β, `S₀`)
 ) |> 
     pivot_longer(everything(), "var") |>
     mutate(var=fct_relevel(fct_recode(var, !!!texlab), !!!names(texlab)))
-
-# TODO: add post draws to each of these
-palpha <- ggplot() +
-    stat_function(fun=~dunif(.x, 0.05, 0.85), size=1.3) +
-    geom_vline(xintercept=alpha_true, linetype="dashed", color="orange", size=1.3) +
-    labs(x="$\\alpha$", y=NULL) +
-    xlim(0, 0.9) +
-    theme_dens
-
-pbeta <- ggplot() +
-    stat_function(fun=~dunif(.x, 0.3, 1.5), size=1.3) +
-    geom_vline(xintercept=beta_true, linetype="dashed", size=1.3, color="orange") +
-    labs(x="$\\beta$", y=NULL) +
-    xlim(0.25, 1.55) +
-    theme_dens
-
-pS0 <- ggplot() +
-    stat_function(fun=~dunif(.x, 0.1, 0.99), size=1.3) +
-    geom_vline(xintercept=S0_true, linetype="dashed", color="orange", size=1.3) +
-    labs(x="$S_0$", y=NULL) +
-    xlim(0.05, 1.05) +
-    theme_dens
 
 tvars <- texlab[-c(1:3)]
 
@@ -108,8 +88,8 @@ dunif(seq(0, 0.9, 0.01), 0.05, 0.85)
 
 stan_dat <- list(
     max_t=30,
-    max_obs_t=8,
-    ts = 0:8,
+    max_obs_t=3,
+    ts = 0:3,
     y=c(7, 22, 38, 50, 59, 115, 163, 183, 242, 239, 244, 230, 213, 183, 136, 148, 116, 109, 78, 69, 52, 52, 34, 44, 26, 23, 16, 13, 17, 13, 12),
     I0= 0.01
 )
@@ -118,14 +98,15 @@ exec <- cmdstan_model("scripts/fit-sir.stan")
 
 fit <- exec$sample(data=stan_dat)
 
-post8 <- as_draws_df(fit$draws()) |> 
+post3 <- as_draws_df(fit$draws()) |> 
     as_tibble() |> 
     select(`α`=alpha, `β`=beta, `S₀`=S0) |> 
     mutate(
         `rep-number`=rep_number(α, β),
         `outbreak-size`=outbreak_size(α, β, `S₀`),
         `peak-intensity`=peak_intensity(α, β, `S₀`),
-        `growth-rate`=growth_rate(α, β, `S₀`)
+        `peak-timing`=read_csv("_research/tpeak-post3.csv")$V,
+        `growth-rate`=growth_rate(α, β, `S₀`),
     ) |> 
     pivot_longer(everything(), "var") |>
     mutate(var=fct_relevel(fct_recode(var, !!!texlab), !!!names(texlab)))
@@ -142,7 +123,7 @@ density_plot_var <- function(var, idx) {
         filter(var == !!var) |> 
         ggplot(aes(value, group=dist, col=dist)) +
         geom_density(size=1.1, adjust=1.3, alpha=0.7) +
-        geom_vline(xintercept=filter(true_vals, var == !!var)$value, col="orange", linetype="dashed", size=1.3) +
+        geom_vline(xintercept=filter(true_vals, var == !!var)$value, col="orange", linetype="dashed", size=1.45) +
         scale_color_manual(values=c("gray30", "#f53db5", "purple")) +
         labs(x=str_extract(var, "\\$.+\\$"), y=NULL) +
         theme_dens
@@ -156,14 +137,17 @@ theme_dens <- theme_bw() +
     theme(
         strip.background=element_blank(),
         strip.text=element_blank(),
-        # axis.text=element_text(size=rel(0.5)),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
         axis.title=element_blank(),
         panel.grid=element_blank(),
         legend.position="none",
-        plot.margin=unit(c(0, 0, 0, 0.02), "in")
+        plot.margin=unit(c(0, 0, 0, 0), "in")
     )
 
 plot_dens <- imap(true_vals$var, density_plot_var)
+plot_dens[[1]] <- plot_dens[[1]] + scale_x_continuous(n.breaks=4)
+plot_dens[[1]] + scale_x_continuous(n.breaks=4)
 
 # plot_dens <- ggplot(all_samps, aes(value, col=var, group=dist)) +
 #     geom_density(size=1.3, adjust=1.5, alpha=0.7) +

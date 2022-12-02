@@ -49,7 +49,7 @@ p4 <- ggplot(samp_osize, aes(beta, S0)) +
     theme(legend.position="none")
 
 # Peak intensity------------------------------------------------------------------
-samp_imax <- read_csv("data/sims/cond-samples/samp-peak-intensity.csv")
+samp_imax <- read_csv("data/sims/cond-samples/samp-peak-intensity2.csv")
 
 p5 <- ggplot(samp_imax, aes(alpha, beta)) +
     geom_density_2d_filled(adjust=1.4) +
@@ -86,6 +86,34 @@ p7 <- ggplot(samp_grate, aes(alpha, beta)) +
 p8 <- ggplot(samp_grate, aes(beta, S0)) +
     geom_density_2d_filled(adjust=2.2) +
     geom_point(data=slice_sample(samp_grate, n=100), col="gray40", shape=1) +
+    scale_fill_viridis_d() +
+    scale_x_continuous(expand=expansion(0.0001)) +
+    scale_y_continuous(expand=expansion(0.0001)) +
+    labs(x="$\\beta$", y="$S_0$", fill="Density") +
+    theme(legend.position="none")
+
+# samp_tpeak <- bind_rows(
+#     read_csv("data/sims/cond-samples/samp-peak-timing.csv"),
+#     read_csv("data/sims/cond-samples/samp-peak-timing-more.csv"),
+#     read_csv("data/sims/cond-samples/samp-peak-timing-more2.csv")
+# ) |> 
+#     slice_sample(n=60000, replace=TRUE)
+# 
+# write_csv(samp_tpeak, "data/sims/cond-samples/samp-peak-timing.csv")
+
+ggplot(samp_tpeak, aes(alpha, beta)) +
+    geom_density_2d_filled(adjust=2.5) +
+    geom_point(data=slice_sample(samp_rnot, n=100), col="gray40", shape=1) +
+    scale_fill_viridis_d() +
+    scale_x_continuous(expand=expansion(0.0001)) +
+    scale_y_continuous(expand=expansion(0.0001)) +
+    labs(x="$\\alpha$", y="$\\beta$", fill="Density") +
+    theme_bw() +
+    theme(legend.position="none")
+
+p2 <- ggplot(samp_tpeak, aes(beta, S0)) +
+    geom_density_2d_filled(adjust=2) +
+    geom_point(data=slice_sample(samp_rnot, n=100), col="gray40", shape=1) +
     scale_fill_viridis_d() +
     scale_x_continuous(expand=expansion(0.0001)) +
     scale_y_continuous(expand=expansion(0.0001)) +
