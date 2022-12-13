@@ -1,3 +1,5 @@
+#= Random collection of simulations not directly related to the experiments =#
+
 using DrWatson
 @quickactivate "optimal-test-design"
 using Revise
@@ -23,12 +25,10 @@ function save_sims(varname, inf)
     )
 end
 
-# DANGER: these values must match the ones in daily-obs script!!
 θtrue = (α=0.2f0, β=1.25f0, S₀=0.6f0)
-# θtrue = (S₀=1f0, β=0.2f0, α=0.2f0)
 θprior = (α=Uniform(0.05f0, 0.85f0), β=Uniform(0.3f0, 1.5f0), S₀=Uniform(0.1f0, 0.99f0))
 
-#= Basic Reproductive Number =#
+#= Peak timing =#
 tpeak_true = peak_timing(θtrue.α, θtrue.β, θtrue.S₀)
 αcond, βcond, Scond = sample_cond_f(θprior, tpeak_true, inv_peak_timing, d_inv_peak_timing; pivot=:β, nsamples=10_000, acc_rate=10)
 sir_cond = SIRModel{Float32}(
@@ -105,7 +105,7 @@ imax = max_inf(θtrue...)
     θprior, imax, inv_max_inf, d_inv_max_inf; 
     pivot=:S₀, nsamples=60_000
 )
-αcond, βcond, Scond = sample_trunc_f(θprior, (a, b, S)->reff(a, b, S) > 1; nsamples=60_000)
+αcond, βcond, Scond = sample_trunc_f(θprior, (a, b, S)->reff(a, b, S) <= 1; nsamples=60_000)
 sir_cond = SIRModel{Float32}(
     S₀=Particles(Float32.(Scond)), 
     β=Particles(Float32.(βcond)), 

@@ -76,36 +76,27 @@ true_vals <- tibble(
     pivot_longer(everything(), "var") |>
     mutate(var=fct_relevel(fct_recode(var, !!!texlab), !!!names(texlab)))
 
-tvars <- texlab[-c(1:3)]
-
-ptvars <- map(tvars, ~plot_transformation(.x, priors, true_vals))
-
-plot_dens <- plot_grid(plotlist=rlang::list2(palpha, pbeta, pS0, !!!ptvars), nrow=1)
-
-dunif(seq(0, 0.9, 0.01), 0.05, 0.85)
-
 ###
 
 stan_dat <- list(
     max_t=30,
-    max_obs_t=3,
-    ts = 0:3,
+    max_obs_t=8,
+    ts = 0:8,
     y=c(7, 22, 38, 50, 59, 115, 163, 183, 242, 239, 244, 230, 213, 183, 136, 148, 116, 109, 78, 69, 52, 52, 34, 44, 26, 23, 16, 13, 17, 13, 12),
     I0= 0.01
 )
 
 exec <- cmdstan_model("scripts/fit-sir.stan")
-
 fit <- exec$sample(data=stan_dat)
 
-post3 <- as_draws_df(fit$draws()) |> 
+post8 <- as_draws_df(fit$draws()) |> 
     as_tibble() |> 
     select(`α`=alpha, `β`=beta, `S₀`=S0) |> 
     mutate(
         `rep-number`=rep_number(α, β),
         `outbreak-size`=outbreak_size(α, β, `S₀`),
         `peak-intensity`=peak_intensity(α, β, `S₀`),
-        `peak-timing`=read_csv("_research/tpeak-post3.csv")$V,
+        `peak-timing`=read_csv("_research/tpeak-post8.csv")$V,
         `growth-rate`=growth_rate(α, β, `S₀`),
     ) |> 
     pivot_longer(everything(), "var") |>
@@ -146,8 +137,11 @@ theme_dens <- theme_bw() +
     )
 
 plot_dens <- imap(true_vals$var, density_plot_var)
-plot_dens[[1]] <- plot_dens[[1]] + scale_x_continuous(n.breaks=4)
-plot_dens[[1]] + scale_x_continuous(n.breaks=4)
+plot_dens[[1]] <- plot_dens[[1]] + scale_x_continuous(breaks=c(0.1, 0.45, 0.8))
+plot_dens[[3]] <- plot_dens[[3]] + scale_x_continuous(breaks=c(0.1, 0.5, 0.9))
+plot_dens[[5]] <- plot_dens[[5]] + scale_x_continuous(breaks=c(0, 0.5, 1))
+plot_dens[[6]] <- plot_dens[[6]] + scale_x_continuous(breaks=c(0, 0.4, 0.8))
+plot_dens[[8]] <- plot_dens[[8]] + scale_x_continuous(breaks=c(-0.5, 0.25, 1))
 
 # plot_dens <- ggplot(all_samps, aes(value, col=var, group=dist)) +
 #     geom_density(size=1.3, adjust=1.5, alpha=0.7) +

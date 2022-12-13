@@ -19,8 +19,32 @@ function sir_from_samples(α, β, S₀)
 end
 
 function solve_inf_cond(θtrue, θprior, lat_mod)
+    silent=true
     nsamples=nparticles(lat_mod.β)
     inf_conds = Dict()
+
+    #= Simulations for ind. variables =#
+    for θᵢ in keys(θtrue) # setup for ind params
+        lab = string(θᵢ)
+        θcond = NamedTupleTools.select(θtrue, (θᵢ,))
+        inf_conds[lab] = solve(lat_mod, θcond; save_idxs=2, saveat=1).u # simulate x∣θᵢ
+    end
+
+    #= Basic Reproductive Number =#
+    Rtrue = rnot(θtrue.α, θtrue.β)
+    αcond, βcond = sample_cond_f(NamedTupleTools.select(θprior, (:α, :β)), Rtrue, inv_rnot, d_inv_rnot; pivot=:β, nsamples, silent)
+    sir_cond = sir_from_samples(αcond, βcond, rand(θprior.S₀, nsamples))
+    inf_conds["rep-number"] = solve(sir_cond; save_idxs=2, saveat=1).u
+
+    #= Outbreak Size =#
+    osize = outbreak_size(θtrue.α, θtrue.β, θtrue.S₀)
+    αcond, βcond, Scond = sample_cond_f(
+        θprior, osize, inv_outbreak_size, d_inv_outbreak_size; 
+        pivot=:β, cond=(α, S₀, size) -> S₀+0.01 < size, nsamples, silent
+    )
+    sir_cond = sir_from_samples(αcond, βcond, Scond)
+    inf_conds["outbreak-size"] = solve(sir_cond; save_idxs=2, saveat=1).u
+
     #= Peak intensity =#
     imax = max_inf(θtrue...)
     if imax > lat_mod.I₀
@@ -34,33 +58,11 @@ function solve_inf_cond(θtrue, θprior, lat_mod)
     sir_cond = sir_from_samples(αcond, βcond, Scond)
     inf_conds["peak-intensity"] = solve(sir_cond; save_idxs=2, saveat=1).u
 
-    #= Simulations for ind. variables =#
-    for θᵢ in keys(θtrue) # setup for ind params
-        lab = string(θᵢ)
-        θcond = NamedTupleTools.select(θtrue, (θᵢ,))
-        inf_conds[lab] = solve(lat_mod, θcond; save_idxs=2, saveat=1).u # simulate x∣θᵢ
-    end
-
-    #= Basic Reproductive Number =#
-    Rtrue = rnot(θtrue.α, θtrue.β)
-    αcond, βcond = sample_cond_f(NamedTupleTools.select(θprior, (:α, :β)), Rtrue, inv_rnot, d_inv_rnot; pivot=:β, nsamples, silent=true)
-    sir_cond = sir_from_samples(αcond, βcond, rand(θprior.S₀, nsamples))
-    inf_conds["rep-number"] = solve(sir_cond; save_idxs=2, saveat=1).u
-
-    #= Outbreak Size =#
-    osize = outbreak_size(θtrue.α, θtrue.β, θtrue.S₀)
-    αcond, βcond, Scond = sample_cond_f(
-        θprior, osize, inv_outbreak_size, d_inv_outbreak_size; 
-        pivot=:β, cond=(α, S₀, size) -> S₀+0.01 < size, nsamples, silent=true
-    )
-    sir_cond = sir_from_samples(αcond, βcond, Scond)
-    inf_conds["outbreak-size"] = solve(sir_cond; save_idxs=2, saveat=1).u
-
     #= Initial growth rate =#
     grate = growth_rate(θtrue...)
     αcond, βcond, Scond = sample_cond_f(
         θprior, grate, inv_growth_rate, d_inv_growth_rate; 
-        pivot=:α, nsamples, silent=true
+        pivot=:α, nsamples
     )
     sir_cond = sir_from_samples(αcond, βcond, Scond)
     inf_conds["growth-rate"] = solve(sir_cond; save_idxs=2, saveat=1).u

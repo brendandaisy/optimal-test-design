@@ -3,6 +3,8 @@ library(ggthemes)
 library(tikzDevice)
 library(ggprism)
 library(cowplot)
+library(grid)
+library(gridExtra)
 
 tikz_plot <- function(ggp, fname='tikz', w=8.5, h=4, dir="plots") {
   cur_wd <- getwd()
@@ -30,6 +32,17 @@ recover_md <- function(df, var) {
 
 res <- mutate(res[2, ], `md-peak-timing`=res[1, "md-peak-timing"])
 
+texlab = c(
+  "Recovery rate $\\alpha$"="α", 
+  "Infection rate $\\beta$"="β", 
+  "Initial susceptible $S_0$"="S₀", 
+  "Basic rep. number $\\mathcal{R}$"="rep-number", 
+  "Outbreak size $\\mathcal{O}$"="outbreak-size",
+  "Peak intensity $\\mathcal{P}$"="peak-intensity",
+  "Peak timing $\\mathcal{T}$"="peak-timing",
+  "Growth rate $\\mathcal{G}$"="growth-rate"
+)
+
 res_long <- res |>
   recover_md(`md-α`) |>
   recover_md(`md-β`) |>
@@ -44,17 +57,6 @@ res_long <- res |>
   select(mdiv, var, t) |> 
   mutate(var=fct_relevel(fct_recode(var, !!!texlab), !!!names(texlab)))
 
-texlab = c(
-  "Recovery rate $\\alpha$"="α", 
-  "Infection rate $\\beta$"="β", 
-  "Initial susceptible $S_0$"="S₀", 
-  "Basic rep. number $\\mathcal{R}$"="rep-number", 
-  "Outbreak size $\\mathcal{O}$"="outbreak-size",
-  "Peak intensity $\\mathcal{P}$"="peak-intensity",
-  "Peak timing $\\mathcal{T}$"="peak-timing",
-  "Growth rate $\\mathcal{G}$"="growth-rate"
-)
-
 md_plot_var <- function(var, idx) {
   p <- res_long |>
     filter(var == !!var) |> 
@@ -62,7 +64,7 @@ md_plot_var <- function(var, idx) {
     # geom_vline(xintercept=peak, col="#ffa24b", linetype="dashed", size=1.3) +
     geom_segment(x=3, xend=3, y=-0.1, yend=1.1, col="#f53db5", size=0.9, alpha=0.6, linetype="dashed") +
     geom_segment(x=8, xend=8, y=-0.1, yend=1.1, col="purple", size=0.9, alpha=0.6, linetype="dashed") +
-    geom_line(size=1.6, col="lightblue") +
+    geom_line(size=1.6, col="gray30") +
     labs(title=var, x=NULL) +
     ylim(0, 4.5) +
     # scale_x_continuous(guide=guide_prism_minor(), breaks=seq(0, 30, 5), minor_breaks=1:29) +
@@ -73,7 +75,7 @@ md_plot_var <- function(var, idx) {
       axis.text=element_text(size=rel(1.1)),
       panel.grid.minor.x=element_blank(),
       legend.position="none",
-      plot.margin = unit(c(0.02, 0.15, 0, 0.02), "in")
+      plot.margin = unit(c(0.03, 0, 0, 0.1), "in")
     )
   
   # if (idx %% 2 == 0)
@@ -86,18 +88,18 @@ plot_md <- imap(names(texlab), md_plot_var)
 md_rows <- map(1:8, ~{
   gdraw <- ggdraw(plot_md[[.x]])
   if (.x < 6)
-    gdraw <- gdraw + draw_plot(plot_dens[[.x]], x=0.09, y=0.88, width=0.49, height=0.39, vjust=1)
+    # gdraw <- gdraw + draw_plot(plot_dens[[.x]], x=0.09, y=0.88, width=0.49, height=0.39, vjust=1)
+    gdraw <- gdraw + draw_plot(plot_dens[[.x]], x=0.14, y=0.88, width=0.47, height=0.37, vjust=1)
   else
-    gdraw <- gdraw + draw_plot(plot_dens[[.x]], x=0.9, y=0.1, width=0.49, height=0.39, hjust=1)
+    gdraw <- gdraw + draw_plot(plot_dens[[.x]], x=0.96, y=0.1, width=0.47, height=0.37, hjust=1)
+    # gdraw <- gdraw + draw_plot(plot_dens[[.x]], x=0.9, y=0.1, width=0.49, height=0.39, hjust=1)
   gdraw
 })
 
 panel1 <- plot_grid(plotlist=md_rows, align="h", axis="l", nrow=2)
 y_lab <- textGrob("Identifiability $\\delta_u$", rot=90, gp=gpar(fontsize=16))
 x_lab <- textGrob("Days of observation", gp=gpar(fontsize=16))
-                   # gp=gpar(fontface="bold", col="blue", fontsize=15))
-
-tikz_plot(grid.arrange(arrangeGrob(panel1, left=y_lab, bottom=x_lab)), "increasing-tspan-12-1", w=9.72, h=5.42)
+panel1 <- grid.arrange(arrangeGrob(panel1, left=y_lab, bottom=x_lab))
 
 ##
 
@@ -108,18 +110,37 @@ inf_pri <- read_csv("data/sims/sim-full-prior.csv") |>
 
 inf_pri_summ <- inf_pri |> 
   group_by(t) |> 
-  summarise(ymin=quantile(inf, 0.05), ymax=quantile(inf, 0.95))
+  summarise(ymin=quantile(inf, 0.025), ymax=quantile(inf, 0.975))
 
-panel2 <- inf_pri |> 
-  filter(id %in% sample(max(id), 50)) |> 
-  ggplot(aes(t, inf)) +
-  geom_ribbon(aes(t, ymin=ymin, ymax=ymax), data=inf_pri_summ, col="gray70", fill="gray70", inherit.aes=FALSE) +
-  geom_line(aes(group=id), alpha=0.2, col="darkblue") +
-  geom_line(data=true_inf, col="orange", size=1.5) +
-  scale_x_continuous(guide = guide_prism_minor(), breaks=seq(0, 30, 5), minor_breaks=1:29) +
+panel2 <- 
+  # inf_pri |> 
+  # filter(id %in% sample(max(id), 50)) |> 
+  # ggplot(aes(t, inf)) +
+  # geom_ribbon(
+  #   aes(t, ymin=ymin, ymax=ymax), data=inf_pri_summ, 
+  #   alpha=0.8, col="gray80", fill="gray80", inherit.aes=FALSE
+  # ) +
+  ggplot(true_inf, aes(t, inf)) +
+  # stat_function(fun=~0.01 * exp(.x * (beta_true*Strue - alpha_true)), col="gray30", alpha=0.8, xlim=c(0, 6)) +
+  # geom_line(aes(group=id), alpha=0.2, col="gray30") +
+  annotate("rect", xmin=-1, ymin=0, xmax=6, ymax=0.5, fill="lightblue", alpha=0.35) +
+  annotate("rect", xmin=6, ymin=0, xmax=14, ymax=0.5, fill="#f53db5", alpha=0.2) +
+  annotate("rect", xmin=14, ymin=0, xmax=31, ymax=0.5, fill="blue4", alpha=0.2) +
+  geom_line(col="orange", size=1.4) +
+  geom_point(data=tibble(t=0:30, inf=stan_dat$y/1000), col="#f53db5", size=0.9) +
+  scale_x_continuous(guide=guide_prism_minor(), breaks=seq(0, 30, 5), minor_breaks=1:29) +
   labs(x="Time $t$", y="$I(t)$", col=NULL) +
   theme_half_open() +
-  theme(plot.margin=unit(c(0.01, 0.3, 0.01, 0.15), "in"))
+  theme(plot.margin=unit(c(0, 0, 0, 0.25), "in"))
+
+gg <- plot_grid(
+  panel1, 
+  plot_grid(NULL, panel2, NULL, ncol=1, rel_heights=c(0.25, 0.5, 0.25), labels=c("", "B", "")),
+  rel_widths=c(0.67, 0.33),
+  labels=c("A", "")
+)
+
+tikz_plot(gg, "increasing-tspan-12-7", w=11.8, h=5.42)
  
 ##
 vars <- c("α", "β", "S₀", "rep-number", "outbreak-size", "peak-intensity", "growth-rate")

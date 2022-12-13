@@ -64,7 +64,7 @@ function peak_timing(α, β, S₀)
     end
     sol = solve(ODEProblem(DiffEqInformationTheory.sir!, [S₀, 0.01f0], (0f0, 30f0), [β, α]), Tsit5(); save_idxs=2, dense=true)
     f = t -> -sol(t)
-    optimize(f, 1f0, 29f0).minimizer
+    optimize(f, 0f0, 30f0).minimizer
 end
 
 function inv_peak_timing(α, S₀, tpeak; βlow=0.3f0, βhi=1.5f0)
