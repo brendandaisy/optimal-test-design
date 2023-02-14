@@ -113,9 +113,9 @@ density_plot_var <- function(var, idx) {
     p <- all_samps |> 
         filter(var == !!var) |> 
         ggplot(aes(value, group=dist, col=dist)) +
-        geom_density(size=1.1, adjust=1.3, alpha=0.7) +
+        geom_density(size=1.25, adjust=1.3, alpha=0.5) +
         geom_vline(xintercept=filter(true_vals, var == !!var)$value, col="orange", linetype="dashed", size=1.45) +
-        scale_color_manual(values=c("gray30", "#f53db5", "purple")) +
+        scale_color_manual(values=c("gray30", "lightblue", "#f53db5")) +
         labs(x=str_extract(var, "\\$.+\\$"), y=NULL) +
         theme_dens
     

@@ -62,8 +62,8 @@ md_plot_var <- function(var, idx) {
     filter(var == !!var) |> 
     ggplot(aes(t, mdiv)) +
     # geom_vline(xintercept=peak, col="#ffa24b", linetype="dashed", size=1.3) +
-    geom_segment(x=3, xend=3, y=-0.1, yend=1.1, col="#f53db5", size=0.9, alpha=0.6, linetype="dashed") +
-    geom_segment(x=8, xend=8, y=-0.1, yend=1.1, col="purple", size=0.9, alpha=0.6, linetype="dashed") +
+    geom_segment(x=3, xend=3, y=-0.1, yend=1.1, col="lightblue", size=0.9, alpha=0.5, linetype="dashed") +
+    geom_segment(x=8, xend=8, y=-0.1, yend=1.1, col="#f53db5", size=0.9, alpha=0.5, linetype="dashed") +
     geom_line(size=1.6, col="gray30") +
     labs(title=var, x=NULL) +
     ylim(0, 4.5) +
@@ -89,7 +89,7 @@ md_rows <- map(1:8, ~{
   gdraw <- ggdraw(plot_md[[.x]])
   if (.x < 6)
     # gdraw <- gdraw + draw_plot(plot_dens[[.x]], x=0.09, y=0.88, width=0.49, height=0.39, vjust=1)
-    gdraw <- gdraw + draw_plot(plot_dens[[.x]], x=0.14, y=0.88, width=0.47, height=0.37, vjust=1)
+    gdraw <- gdraw + draw_plot(plot_dens[[.x]], x=0.16, y=0.88, width=0.47, height=0.37, vjust=1)
   else
     gdraw <- gdraw + draw_plot(plot_dens[[.x]], x=0.96, y=0.1, width=0.47, height=0.37, hjust=1)
     # gdraw <- gdraw + draw_plot(plot_dens[[.x]], x=0.9, y=0.1, width=0.49, height=0.39, hjust=1)
@@ -129,7 +129,7 @@ panel2 <-
   geom_line(col="orange", size=1.4) +
   geom_point(data=tibble(t=0:30, inf=stan_dat$y/1000), col="#f53db5", size=0.9) +
   scale_x_continuous(guide=guide_prism_minor(), breaks=seq(0, 30, 5), minor_breaks=1:29) +
-  labs(x="Time $t$", y="$I(t)$", col=NULL) +
+  labs(x="Days $t$", y="$I(t)$", col=NULL) +
   theme_half_open() +
   theme(plot.margin=unit(c(0, 0, 0, 0.25), "in"))
 
@@ -140,7 +140,7 @@ gg <- plot_grid(
   labels=c("A", "")
 )
 
-tikz_plot(gg, "increasing-tspan-12-7", w=11.8, h=5.42)
+tikz_plot(plot_grid(panel1), "increasing-tspan-p1", w=7.95, h=5.42)
  
 ##
 vars <- c("α", "β", "S₀", "rep-number", "outbreak-size", "peak-intensity", "growth-rate")
